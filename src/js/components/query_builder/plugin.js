@@ -23,7 +23,7 @@ define([
     var QueryBuilder = GenericModule.extend({
       activate: function(beehive) {
         this.pubsub = beehive.Services.get('PubSub');
-        this.pubsub.subscribe(this.pubsub.DELIVERING_RESPONSE, this.getResponse);
+        this.pubsub.subscribe(this.pubsub.DELIVERING_RESPONSE, _.bind(this.getResponse, this));
       },
 
       initialize: function(options) {
@@ -96,6 +96,8 @@ define([
               operators: singleTokenOperators},
             {id: 'title', label: 'Title', type: 'string',
               operators: multiTokenOperators},
+            {id: '__all__', label: 'Any Field', type: 'string',
+              operators: multiTokenOperators},
             {id: 'abstract', label: 'Abstract', type: 'string',
               operators: multiTokenOperators},
             {id: 'keyword', label: 'Keyword', type: 'string',
@@ -159,13 +161,10 @@ define([
         });
       },
 
-      receiveQuery: function(query) {
 
-      },
-      returnQuery: function() {
-
-      },
-
+      /**
+       * Utility method to load CSS into the page in which the plugin is used.
+       */
       loadCss: function() {
         var url = require.toUrl('jquery-querybuilder') + '.css';
 
@@ -178,33 +177,100 @@ define([
         }
       },
 
+      /**
+       * Set the current state of the UI query builder
+       *
+       * @param rules
+       */
       setRules: function(rules) {
         this.$el.queryBuilder('setRules', rules);
       },
 
+      /**
+       * Returns the rules as set inside the UI query builder
+       *
+       * @returns {*}
+       */
       getRules: function() {
         return this.$el.queryBuilder('getRules');
       },
 
+      /**
+       * Resets the query builde UI
+       */
       reset: function() {
         this.$el.queryBuilder('reset');
       },
 
-      getQuery: function() {
-        return this.rulesTranslator.buildQuery(this.getRules());
+      /**
+       * Returns a query string as built from the UI rules. You
+       * can supply the rules; or they will be taken from the
+       * getRules()
+       *
+       * @returns {*}
+       */
+      getQuery: function(rules) {
+        if (!rules)
+          rules = this.getRules();
+        var query = this.rulesTranslator.buildQuery(rules);
+
+        // final modifications (removing some of the unnecessary details)
+        return query.replace(' DEFOP ', ' ').replace('__all__:', '');
       },
 
+      /**
+       * Given an ApiQuery - asks SOLR to give us QTREE; this function
+       * will return a promise. When the promise is resolved, the function
+       * will receive ApiResponse
+       *
+       * @param query
+       * @returns {*}
+       */
       getQTree: function(query) {
-        this.pubsub.publish(this.pubsub.GET_QTREE, new ApiQuery({'q': query}));
         this.promise = $.Deferred();
+        this.pubsub.publish(this.pubsub.GET_QTREE, new ApiQuery({'q': query}));
         return this.promise;
       },
 
 
+      /**
+       * Converts qtree (as returned by SOLR query parser) into UI rules
+       * (that can be used by the UI builder)
+       *
+       * @param qtree
+       */
+      getRulesFromQTree: function(qtree) {
+        return this.rulesTranslator.convertQTreeToRules(qtree);
+      },
+
+      /**
+       * This function receives ApiResponse from the PubSub - usually as a
+       * response to the request to parse a query.
+       *
+       * @param apiResponse
+       */
       getResponse: function(apiResponse) {
         if (this.promise) {
           this.promise.resolve(apiResponse);
         }
+      },
+
+
+      /**
+       * The main logic to execute when we want to update the UI Query Builder
+       * using *query string*
+       */
+      updateQueryBuilder: function(query) {
+
+        var self = this;
+        //first parse the query string into qtree
+        this.getQTree(query).done(function(apiResponse) {
+          var qtree = JSON.parse(apiResponse.get('qtree'));
+          // then translate qtree into 'rules'
+          var rules = self.getRulesFromQTree(qtree);
+          // and update the UI builder with them
+          self.setRules(rules);
+        });
       }
 
     });

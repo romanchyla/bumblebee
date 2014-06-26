@@ -14,14 +14,14 @@ define(['jquery',
   describe("QueryBuilder Query to UI (translation rules)", function () {
 
 
-      var minsub, expected;
+      var minsub, expectedQTree;
       beforeEach(function(done) {
 
         minsub = new (MinimalPubsub.extend({
           request: function(apiRequest) {
             var query = apiRequest.get('query');
             return {'responseHeader': {'status': 0, 'QTime': 0, params: query.toJSON()},
-              'qtree': expected};
+              'qtree': JSON.stringify(expectedQTree)};
           }
         }))({verbose: false});
         done();
@@ -37,12 +37,13 @@ define(['jquery',
       });
 
 
-      it("query #1", function() {
+
+      it("query #1", function(done) {
         var p = new QueryBuilderPlugin();
         p.activate(minsub.beehive.getHardenedInstance());
 
 
-        expected = {"name":"OPERATOR", "label":"DEFOP", "children": [
+        expectedQTree = {"name":"OPERATOR", "label":"DEFOP", "children": [
           {"name":"MODIFIER", "label":"MODIFIER", "children": [
             {"name":"TMODIFIER", "label":"TMODIFIER", "children": [
               {"name":"FIELD", "label":"FIELD", "children": [
@@ -68,7 +69,12 @@ define(['jquery',
 
         promise.done(function(apiResponse) {
           var qtree = JSON.parse(apiResponse.get('qtree'));
-          expect(qtree).to.be.eql(expected);
+          expect(qtree).to.be.eql(expectedQTree);
+
+          var rules = p.getRulesFromQTree(qtree);
+
+          expect(p.getQuery(rules)).to.be.eql("title:joe doe");
+
           done();
         });
 
