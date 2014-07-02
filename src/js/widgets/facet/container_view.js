@@ -16,7 +16,7 @@ define(['backbone', 'marionette',
 
     var FacetContainerView = ContainerView.extend({
 
-      initialize: function () {
+      initialize: function (options) {
         ContainerView.prototype.initialize.call(this, arguments);
         this.displayNum = Marionette.getOption(this, "displayNum") || 5;
         this.maxDisplayNum = Marionette.getOption(this, "maxDisplayNum") || 200;
@@ -33,7 +33,7 @@ define(['backbone', 'marionette',
             throw new Error('logicOptions should be null or an object with single/multiple keys and arrays of strings inside');
           }
 
-          this.on('all', function(ev) {
+          this.on('all', function(ev, info) {
             if (ev.indexOf('itemClicked') > -1
               || ev.indexOf('collection:rendered') > -1
               || ev.indexOf('treeClicked') > -1) {
@@ -49,6 +49,7 @@ define(['backbone', 'marionette',
           // for debugging
           //this.on('all', function(ev) {console.log(ev, arguments)});
         }
+
       },
 
       //id: "search-results",
@@ -61,32 +62,41 @@ define(['backbone', 'marionette',
           "click .dropdown-toggle": "enableLogic",
           "click .dropdown-menu .close": "closeLogic",
           "change .logic-container input": "onLogic",
-          "click .logic-container input": "onLogic"
+          "click .logic-container input": "onLogic",
+          "click .apply": "onApply"
         };
         return _.extend(_.clone(ContainerView.prototype.events), addEvents);
       },
 
       itemViewOptions: function (model, index) {
+//       merging in options from factory stage
+        additionalOptions = Marionette.getOption(this, "additionalItemViewOptions") || {};
+
+        return _.extend({hide: true}, additionalOptions);
+
         //if this is the initial round, hide fetchnum - displaynum
         if (this.paginator && this.paginator.getCycle() <= 1) {
           if (index < this.displayNum) {
-            return {hide: false};
+            return _.extend({hide: false}, additionalOptions);
           }
           else {
-            return {hide: true};
+            return _.extend({hide: true}, additionalOptions);
           }
         }
         else {
           //otherwise, keep the defaults (as set by the template)
-          return {};
+          return additionalOptions;
         }
       },
 
 
       onRender: function() {
         this._onRender();
-        if (this.collection && this.collection.models.length >= this.displayNum) {
+        if (this.collection && this.collection.models.length > this.displayNum) {
           this.enableShowMore();
+        }
+        else {
+          this.disableShowMore();
         }
         if (this.logicOptions) {
           this.refreshLogicTooltip();
@@ -119,14 +129,18 @@ define(['backbone', 'marionette',
 
       enableShowMore: function(text) {
         var $sm = this._getShowMore();
-        $sm.text('Show More');
+        $sm.text('show more');
       },
 
       _getShowMore: function() {
         var $o = this.$('.widget-options.bottom:first');
-        var $sm = $o.find('a[target="ShowMore"]');
-        if (! $sm.length) {
-          $sm = $('<a title="Show more facets" target="ShowMore"></a>');
+        //console.log($o.html())
+        var $sm = $o.find("button[wtarget=ShowMore]");
+        //console.log($sm)
+        if (!$sm.length) {
+        //  console.log("show more", $sm)
+
+          $sm = $('<button class="btn btn-xs btn-link" wtarget="ShowMore">show more</button>');
           $o.append($sm);
         }
         return $sm;
@@ -144,6 +158,7 @@ define(['backbone', 'marionette',
           ev.stopPropagation();
         this.$(".widget-options.top > .dropdown").removeClass("open");
       },
+
 
       onLogic: function(ev) {
         if (ev)

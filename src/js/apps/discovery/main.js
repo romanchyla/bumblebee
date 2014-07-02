@@ -38,12 +38,6 @@ define(["config", 'module'], function(config, module) {
 
       var FacetFactory = app.getModule('FacetFactory');
 
-      var citationsGraphWidget = FacetFactory.makeGraphFacet({
-        facetField: "citation_count",
-        facetTitle: "Citations",
-        xAxisTitle: "Citation Count",
-        openByDefault: true
-      });
 
       var authorFacets = FacetFactory.makeHierarchicalCheckboxFacet({
         facetField: "author_facet_hier",
@@ -294,16 +288,11 @@ define(["config", 'module'], function(config, module) {
         }
       };
 
-      var yearGraph = FacetFactory.makeGraphFacet({
-        facetField: "year",
-        facetTitle: "Articles per year",
-        xAxisTitle: "Year",
-        openByDefault: true
-      });
 
-      citationsGraphWidget.activate(beehive.getHardenedInstance());
+      _.each(app.getWidget('GraphTabs').widgets, function(w){
+        w.activate(beehive.getHardenedInstance());
+      });
       authorFacets.activate(beehive.getHardenedInstance());
-      yearGraph.activate(beehive.getHardenedInstance());
       database.activate(beehive.getHardenedInstance());
       keywords.activate(beehive.getHardenedInstance());
       pub.activate(beehive.getHardenedInstance());
@@ -313,28 +302,32 @@ define(["config", 'module'], function(config, module) {
       grants.activate(beehive.getHardenedInstance());
       refereed.activate(beehive.getHardenedInstance());
 
-      $("#top").append(app.getWidget('SearchBar').render().el);
+      authorFacets.activate(beehive.getHardenedInstance());
+      database.activate(beehive.getHardenedInstance());
 
-      $("#middle").append(app.getWidget('Results').render().el);
-      $("#middle").append(displayDocs.render().el);
+      $("#top")
+        .append(app.getWidget('SearchBar').render().el);
 
-      $("#left").append(authorFacets.render().el);
-      $("#left").append(database.render().el);
-      $("#left").append(refereed.render().el);
-      $("#left").append(keywords.render().el);
-      $("#left").append(pub.render().el);
-      $("#left").append(bibgroup.render().el);
-      $("#left").append(data.render().el);
-      $("#left").append(vizier.render().el);
-      $("#left").append(grants.render().el);
+      $("#s-middle-col-container")
+        .append(app.getWidget('Results').render().el)
+        .append(displayDocs.render().el);
+
+      $("#s-facet-container")
+        .append(authorFacets.render().el)
+        .append(database.render().el)
+        .append(refereed.render().el)
+        .append(keywords.render().el)
+        .append(pub.render().el)
+        .append(bibgroup.render().el)
+        .append(data.render().el)
+        .append(vizier.render().el)
+        .append(grants.render().el);
 
 
-
-
-      $("#right").append(app.getWidget('QueryInfo').render().el);
-      $("#right").append(yearGraph.render().el);
-      $("#right").append(citationsGraphWidget.render().el);
-      $("#right").append(app.getWidget('QueryDebugInfo').render().el);
+      $("#s-right-col-container")
+        .append(app.getWidget('QueryInfo').render().el)
+        .append(app.getWidget('GraphTabs').render().el)
+        .append(app.getWidget('QueryDebugInfo').render().el);
 
       app.router = new Router();
       app.router.activate(beehive.getHardenedInstance());

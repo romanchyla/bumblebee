@@ -7,7 +7,8 @@ define([
     'js/widgets/facet/container_view',
     'js/widgets/facet/collection',
     'hbs!js/widgets/facet/templates/logic-container',
-    'js/widgets/base/tree_view'
+    'js/widgets/base/tree_view',
+    'js/widgets/facet/tree_view',
   ],
 
   function (
@@ -19,10 +20,11 @@ define([
     FacetContainerView,
     FacetCollection,
     LogicSelectionContainerTemplate,
-    TreeView
+    TreeView,
+    FacetTreeView
     ) {
 
-    describe("Facet Widget - base (UI)", function () {
+    describe("FacetWidget - base (UI)", function () {
 
       // modify the test to contain only 5 pairs of facet values
       _.each([test1, test2], function(o) {
@@ -36,7 +38,7 @@ define([
       beforeEach(function(done) {
         //var testId = 'test' + Math.random().toString(16).split('.')[1];
         //var testEl = $('<div id="' +  testId + '">hello</div>');
-        testId = '#test-area';
+        testId = '#test';
         //$('#test-area').append(testEl);
         minsub = new (MinimalPubsub.extend({
           request: function(apiRequest) {
@@ -79,7 +81,7 @@ define([
         expect(w).to.be.instanceof(FacetWidgetSuperClass);
 
         $w = $(w.render().el);
-        expect($w.find('h5').text()).to.be.equal('Facet Title');
+        expect($w.find('h5').text().trim()).to.be.equal('Facet Title');
         expect($w.find('.widget-body').text().trim()).to.be.equal('No content to display.');
         done();
       });
@@ -155,7 +157,7 @@ define([
         expect($w.find('.item-view').not('.hide').length).to.be.equal(3);
 
 
-        $w.find('a[target="ShowMore"]').click();
+        $w.find('button[wtarget="ShowMore"]').click();
         setTimeout(
           function() {
             expect($w.find('.item-view').not('.hide').length).to.be.equal(6);
@@ -169,14 +171,14 @@ define([
             // select one item - this should trigger new query
             $w.find('.item-view:eq(5) input').click();  // XXX for some reason this works only if it is appended to the page
             expect(widget.dispatchNewQuery.callCount).to.be.equal(1);
-            expect(widget.dispatchNewQuery.args[0][0].get('q')).to.be.eql(['star', '0\\/Wang,\\ J']);
+            expect(widget.dispatchNewQuery.args[0][0].get('q')).to.be.eql(["(star AND 0\\/Wang,\\ J)"]);
             expect(widget.processResponse.callCount).to.be.equal(3);
 
 
-            // which updates the view
+            // which updates the view (we should see 3 new, 2 hidden new items)
             expect($w.find('.widget-options.bottom').hasClass('hide')).to.be.false;
             expect($w.find('.item-view').length).to.be.equal(5);
-            expect($w.find('.item-view').not('.hide').length).to.be.equal(3);
+            expect($w.find('.item-view').filter('.hide').length).to.be.equal(2);
 
             done();
           }
@@ -209,7 +211,7 @@ define([
         minsub.publish(minsub.NEW_QUERY, minsub.createQuery({'q': 'star'}));
 
         var $w = $(widget.render().el);
-        $(testId).append($w);
+        $('#test').append($w);
 
         $w.find('.item-view:first input').click();
         expect($w.find('input[value="limit to"]').is(':visible')).to.be.true;
@@ -225,7 +227,6 @@ define([
         done();
       });
 
-
       it("knows to handle hierarchial views", function(done) {
 
         var widget = new FacetWidget({
@@ -235,7 +236,7 @@ define([
             "facet.mincount": "1"
           },
           view: new FacetContainerView({
-            itemView: TreeView,
+            itemView: FacetTreeView,
             model: new FacetContainerView.ContainerModelClass({title: "Facet Title"}),
             collection: new TreeView.CollectionClass(),
             displayNum: 3,
@@ -253,14 +254,14 @@ define([
         minsub.publish(minsub.NEW_QUERY, minsub.createQuery({'q': 'star'}));
 
         var $w = $(widget.render().el);
-        $(testId).append($w);
+        $('#test').append($w);
 
         expect($w.find('input').length).to.be.gt(0);
 
         $w.find('.widget-item:first').click();
         expect(widget.handleTreeExpansion.called).to.be.true;
         expect(widget.processFacetResponse.called).to.be.true;
-        expect(widget.processFacetResponse.args[1][0].getApiQuery().get('facet.prefix')).to.be.eql(['1/Head, J']);
+        expect(widget.processFacetResponse.args[1][0].getApiQuery().get('facet.prefix')).to.be.eql(['1/Head, J/']);
 
         done();
       });

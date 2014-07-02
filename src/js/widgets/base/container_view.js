@@ -59,13 +59,26 @@ define(['backbone', 'marionette',
 
         options = options || {};
 
-        this.itemViewOptions = Marionette.getOption(this, "itemViewOptions") || {};
+        //this.itemViewOptions = Marionette.getOption(this, "itemViewOptions") || {};
         this.openByDefault = Marionette.getOption(this, "openByDefault");
         this.showOptions = Marionette.getOption(this, "showOptions");
+
+        this.displayNum = Marionette.getOption(this, "displayNum") || 5;
+        this.maxDisplayNum = Marionette.getOption(this, "maxDisplayNum") || 200;
 
         this._states = [];
       },
 
+      itemViewOptions: function (model, index) {
+        var additionalOptions = Marionette.getOption(this, "additionalItemViewOptions") || {};
+        //if this is the initial round, hide fetchnum - displaynum
+        if (index < this.displayNum) {
+          return _.extend({hide: false}, additionalOptions);
+        }
+        else {
+          return _.extend({hide: true}, additionalOptions);
+        }
+      },
 
       /**
        * Called right after the view has been rendered
@@ -78,10 +91,10 @@ define(['backbone', 'marionette',
         if (this.openByDefault) {
           this.toggleWidget();
         }
-//        if (this.showOptions) {
-//          this.$(".widget-options:first").removeClass("hide");
-//          this.$(".widget-options.bottom:first").removeClass("hide");
-//        }
+        if (this.showOptions) {
+          this.$(".widget-options:first").removeClass("hide");
+          this.$(".widget-options.bottom:first").removeClass("hide");
+        }
       },
 
       /**
@@ -93,18 +106,18 @@ define(['backbone', 'marionette',
         if (e){
           e.stopPropagation();
         }
-        var $caret = this.$(".main-caret");
+        var $caret = this.$(".main-caret:first");
         if ($caret.hasClass("item-open")) {
           $caret.removeClass("item-open");
           $caret.addClass("item-closed");
-          this.$(".widget-body").addClass("hide");
-          this.$(".widget-options").addClass("hide")
+          this.$(".widget-body:first").addClass("hide");
+          this.$(".widget-options:first").addClass("hide")
         }
         else {
           $caret.removeClass("item-closed");
           $caret.addClass("item-open");
-          this.$(".widget-body").removeClass("hide");
-          this.$(".widget-options").removeClass("hide")
+          this.$(".widget-body:first").removeClass("hide");
+          this.$(".widget-options:first").removeClass("hide")
 
         }
       },
@@ -114,7 +127,7 @@ define(['backbone', 'marionette',
         if (ev && ev.target) {
           var $el = $(ev.target);
           var text = $el.text().trim();
-          var tgt = $el.attr('target');
+          var tgt = $el.attr('wtarget');
           ev.preventDefault();
           if (tgt) {
             this.triggerMethod(tgt, ev);

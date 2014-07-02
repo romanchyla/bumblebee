@@ -41,6 +41,7 @@ require([
 
   var searchBar = new SearchBar();
   var results = new ResultsWidget({pagination: {rows: 40, start:0}});
+
   var citationsGraphWidget = FacetFactory.makeGraphFacet({
     facetField: "citation_count",
     facetTitle: "Citations",
@@ -172,24 +173,23 @@ require([
 
   $("#top").append(searchBar.render().el);
 
-  $("#middle").append(results.render().el);
-  $("#middle").append(layout.render().el);
+  $("#s-middle-col-container").append(results.render().el).append(layout.render().el)
 
-  $("#left").append(authorFacets.render().el);
-  $("#left").append(database.render().el);
-  $("#left").append(refereed.render().el);
-  $("#left").append(keywords.render().el);
-  $("#left").append(pub.render().el);
-  $("#left").append(bibgroup.render().el);
-  $("#left").append(data.render().el);
-  $("#left").append(vizier.render().el);
-  $("#left").append(grants.render().el);
-
-
+  $("#s-facet-container")
+    .append(authorFacets.render().el)
+    .append(database.render().el)
+    .append(refereed.render().el)
+    .append(keywords.render().el)
+    .append(pub.render().el)
+    .append(bibgroup.render().el)
+    .append(data.render().el)
+    .append(vizier.render().el)
+    .append(grants.render().el)
 
 
-  $("#right").append(queryInfo.render().el);
-  $("#right").append(yearGraph.render().el);
-  $("#right").append(citationsGraphWidget.render().el);
+  $("#s-right-col-container")
+    .append(queryInfo.render().el)
+    .append(yearGraph.render().el)
+    .append(citationsGraphWidget.render().el);
 
 });

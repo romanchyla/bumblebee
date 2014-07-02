@@ -20,7 +20,6 @@ define(['backbone',
     var BaseFacetWidget = PaginatedMultiCallbackWidget.extend({
 
       initialize: function (options) {
-
         options = options || {};
         this._checkStandardWidgetOptions(options);
 
@@ -37,6 +36,7 @@ define(['backbone',
 
         this.responseProcessors = options['responseProcessors'] || this.responseProcessors || [];
         this.extractionProcessors = options['extractionProcessors'] || this.extractionProcessors || [];
+        this.hierMaxLevels = options['hierMaxLevels'] || this.hierMaxLevels || -1;
 
         this._extractor = undefined;
         this._preprocessor = undefined;
@@ -133,6 +133,7 @@ define(['backbone',
           }
 
           var d = {
+            total : apiResponse.toJSON().response.numFound,
             title: modifiedValue,
             value: fValue,
             count: fNum,
@@ -154,9 +155,9 @@ define(['backbone',
 
 
         // for the first level display only (nested levels are triggered through toggleChildren)
-        if (paginator.getCycle() <= 1 && this.view === view) {
-          view.displayMore(this.view.displayNum);
-        }
+        //if (paginator.getCycle() <= 1 && this.view === view) {
+        //  view.displayMore(this.view.displayNum);
+        //}
 
         if (facetsCol.length > 0) { // we got a full batch (so we'll assume there is more)
           view.enableShowMore();
@@ -198,7 +199,7 @@ define(['backbone',
 
       //deliver info to pubsub after one of two main submit events (depending on facet type)
       onAllInternalEvents: function(ev, arg1, arg2) {
-        //console.log(ev);
+        //console.log('widget', ev);
         if (ev.indexOf("fetchMore") > -1) {
           var numOfLoadedButHidden = arguments[arguments.length-2];
           var data = arguments[arguments.length-1];
@@ -227,14 +228,22 @@ define(['backbone',
         else if (ev.substring(ev.length-20) == 'itemview:itemClicked') {
           var view = arguments[arguments.length-1];
           this.handleConditionApplied(view.model);
+
         }
         else if (ev.substring(ev.length-20) == 'itemview:treeClicked') { // hierarchical view
           var view = arguments[arguments.length-1];
           this.handleConditionApplied(view.model);
         }
         else if (ev.indexOf('treeNodeDisplayed') > -1) {
+          if (this.hierMaxLevels > -1 && ev.split('itemview:').length >= this.hierMaxLevels+1) {
+            return; // ignore further requests
+          }
+
           var view = arguments[arguments.length-1];
           this.handleTreeExpansion(view); // see if we need to fetch deeper data
+        }
+        else if (ev == 'composite:collection:rendered') {
+          this.view.displayMore(this.view.displayNum);
         }
         else if (ev == 'containerLogicSelected') {
           this.handleLogicalSelection(arg1);
@@ -314,10 +323,10 @@ define(['backbone',
             q = q.clone();
             value = this.queryUpdater.escapeInclWhitespace(value);
             if (model.get('selected')) {
-              this.queryUpdater.updateQuery(q, 'q', value, 'AND', 'add');
+              this.queryUpdater.updateQuery(q, 'q', 'limit', value);
             }
             else {
-              this.queryUpdater.updateQuery(q, 'q', value, 'AND', 'remove');
+              this.queryUpdater.updateQuery(q, 'q', 'exclude', value);
             }
             this.dispatchNewQuery(paginator.cleanQuery(q));
           }

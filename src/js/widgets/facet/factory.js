@@ -3,7 +3,7 @@ define([
   'js/widgets/facet/widget',
   'js/widgets/facet/container_view',
   'hbs!js/widgets/facet/templates/logic-container',
-  'js/widgets/base/tree_view',
+  'js/widgets/facet/tree_view',
   'js/widgets/base/base_widget',
   'js/components/paginator',
   'js/widgets/facet/zoomable_graph_view'
@@ -122,12 +122,13 @@ define([
           "facet.prefix": "0/",
           fl: 'id'
         },
+        hierMaxLevels: 2,
         view: new FacetContainerView(containerOptions),
         paginator: new Paginator({start: 0, rows: 20, startName: "facet.offset", rowsName: "facet.limit"})
       };
 
       var controllerOptions = _.extend(controllerOptions, _.pick(options,
-           ['responseProcessors', 'defaultQueryArguments', 'extractionProcessors']));
+        ['responseProcessors', 'defaultQueryArguments', 'extractionProcessors', 'hierMaxLevels']));
 
       var widget = new FacetWidget(controllerOptions);
       return widget;
@@ -163,6 +164,12 @@ define([
         throw new Error("Required configuration variables were not passed");
       }
 
+      var GraphContainerView = FacetContainerView.extend({
+        itemViewOptions: function (model, index) {
+          return _.extend({xAxisTitle: options.facetTitle, title: options.facetTitle}, FacetContainerView.prototype.itemViewOptions.apply(this, arguments));
+        }
+      });
+
       var containerOptions = {
         model: new FacetContainerView.ContainerModelClass({title: options.facetTitle}),
         collection: new FacetCollection(),
@@ -185,18 +192,13 @@ define([
           "facet.limit": 100,
           fl: 'id'
         },
-        view: new FacetContainerView(containerOptions),
-        //so that the html template for the graph can use these values
-        itemViewOptions: {
-          xAxisTitle: options.facetTitle,
-          title: options.facetTitle
-        }
+        view: new GraphContainerView(containerOptions)
       };
 
       var controllerOptions = _.extend(controllerOptions, _.pick(options,
-          ['defaultQueryArguments']));
+        ['defaultQueryArguments']));
 
-      var GraphWidget = BaseWidget.extend({
+      var GraphWidget = FacetWidget.extend({
         facetField: options.facetField,
         //XXX:rca hack - facet.prefix should be cleaned up by QM
         customizeQuery: function(apiQuery) {
