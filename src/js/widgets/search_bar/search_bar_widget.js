@@ -32,13 +32,18 @@ define(['marionette',
 
       initialize: function (options) {
         _.bindAll(this, "tempFieldInsert", "tempFieldClear")
+        this.queryBuilder = new QueryBuilderPlugin();
+        this.queryBuilder.loadCss();
+      },
+
+      activate: function(beehive) {
+        this.queryBuilder.activate(beehive);
       },
 
       onRender: function () {
         this.$("#search-form-container").append(SearchFormTemplate);
         this.$("#field-options div").hoverIntent(this.tempFieldInsert, this.tempFieldClear);
-        this.queryBuilder = new QueryBuilderPlugin({el: this.$("#search-gui")});
-        this.queryBuilder.loadCss();
+        this.$("#search-gui").append(this.queryBuilder.$el.html());
       },
 
       events: {
@@ -181,6 +186,18 @@ define(['marionette',
     })
 
     var SearchBarWidget = BaseWidget.extend({
+
+      activate: function (beehive) {
+        this.pubsub = beehive.Services.get('PubSub');
+
+        //custom dispatchRequest function goes here
+        this.pubsub.subscribe(this.pubsub.INVITING_REQUEST, this.dispatchRequest);
+
+        //custom handleResponse function goes here
+        this.pubsub.subscribe(this.pubsub.DELIVERING_RESPONSE, this.processResponse);
+
+        this.view.activate(beehive);
+      },
 
       defaultQueryArguments: {
         //sort: 'date desc',
