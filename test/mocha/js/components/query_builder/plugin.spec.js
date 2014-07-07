@@ -52,7 +52,7 @@ define(['jquery',
         expect($(document.getElementsByTagName("head")[0]).find('link[href=\''+url+'\']').length).to.be.eql(1);
       });
 
-      it("can insert itself into a page and provides interactive query building", function() {
+      it("supports the complete loop from the user input through qtree back to string output", function() {
         var p = new QueryBuilderPlugin({el: '#test'});
         p.activate(minsub.beehive.getHardenedInstance());
 
@@ -97,6 +97,7 @@ define(['jquery',
         expect(p.getQuery()).to.eql('title:joe AND woe');
 
       });
+
     }
   );
 });

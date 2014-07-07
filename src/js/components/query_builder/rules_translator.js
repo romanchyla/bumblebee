@@ -1,5 +1,9 @@
 /**
  * Created by rchyla on 6/23/14.
+ *
+ * This component provides translation between SOLR Qtree and the
+ * Js QueryBuilder UI rules.
+ *
  */
 
 define(['underscore',
@@ -35,12 +39,13 @@ define(['underscore',
       });
 
       var q = queries.join(' ' + this.operator + ' ');
-      if (level > 0)
+      if (level > 2)
         q = "(" + q + ")";
       return q;
     };
 
-    var validOperators = {'AND': 'AND', 'OR': 'OR', 'DEFOP': 'DEFOP'}
+    var validOperators = {'AND': 'AND', 'OR': 'OR', 'DEFOP': 'DEFOP'};
+
     var RuleNode = function() {
 
     };
@@ -183,11 +188,16 @@ define(['underscore',
           root.setCondition('DEFOP');
           this._extractRules(qtree, root);
         }
-
-
         return root.toJSON();
       },
 
+      /**
+       * Adds reference to the parent to each of the node
+       *
+       * @param qtree
+       * @param parent
+       * @private
+       */
       _parentize: function(qtree, parent) {
         var self = this;
         qtree.parent = parent;
@@ -217,7 +227,7 @@ define(['underscore',
       _extractRule: function(qtree, ruleNode) { // ruleNode can be null
         var ruleNode, inputNode;
         var self = this;
-        console.log('extracting', qtree.name, ruleNode);
+        //console.log('extracting', qtree.name, ruleNode);
 
         switch (qtree.name) {
           case 'OPERATOR':
@@ -361,7 +371,7 @@ define(['underscore',
        *   author:Roman AND (title:galaxy OR abstract:42)
        *
        * @param rules
-       * @returns {*}
+       * @returns String
        */
       buildQuery: function (rules) {
 
@@ -383,6 +393,9 @@ define(['underscore',
               var node = new TreeNode(rule.condition);
               treeNode.addChild(node);
               self._buildQueryTree(node, rule.rules);
+            }
+            else if (rule.rules) {
+              self._buildQueryTree(treeNode, rule.rules);
             }
             else {
               var node = self._buildOneRule(rule);
@@ -416,7 +429,13 @@ define(['underscore',
             case 'contains':
             case 'contains_not':
               field = rule.field;
-              val = this.apiQueryUpdater.quoteIfNecessary(input, '(', ')');
+              if (input.indexOf(' ') > -1) {
+                val = this.apiQueryUpdater.quoteIfNecessary(input, '(', ')');
+              }
+              else {
+                val = this.apiQueryUpdater.quoteIfNecessary(input, '"', '"');
+              }
+
               if (field) {
                 q = field + ':' + val;
               }
@@ -459,6 +478,9 @@ define(['underscore',
               throw new Error('Unknow operator: ' + rule.operator);
           }
           return new TreeNode('', q);
+        }
+        else {
+          throw new Error("Not knowing what to do with: " + JSON.stringify(rule));
         }
       }
 

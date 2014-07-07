@@ -86,6 +86,25 @@ define([
         var multiTokenOperators = ['contains', 'contains_phrase', 'contains_not', 'contains_not_phrase', 'is_not_empty'];
         var functionOperators = ['is', 'is_not'];
 
+        this.singleTokenOperators = singleTokenOperators;
+        this.multiTokenOperators = multiTokenOperators;
+        this.functionOperators = functionOperators;
+
+        // this mapping only needs to contain values that differ from the defaults
+        var _singleMap = {
+          'contains': 'is'
+          };
+        var _allMap = {
+          'starts_with': 'contains',
+          'contains': 'contains'
+        };
+
+        this.operatorMap = {
+          author: _singleMap,
+          keyword: _singleMap,
+          '__all__': _allMap
+        };
+
         this.$el.queryBuilder({
           sortable: true,
 
@@ -212,10 +231,11 @@ define([
       getQuery: function(rules) {
         if (!rules)
           rules = this.getRules();
+
         var query = this.rulesTranslator.buildQuery(rules);
 
         // final modifications (removing some of the unnecessary details)
-        return query.replace(' DEFOP ', ' ').replace('__all__:', '');
+        return query.split(' DEFOP ').join(' ').split('__all__:').join('');
       },
 
       /**
@@ -240,7 +260,11 @@ define([
        * @param qtree
        */
       getRulesFromQTree: function(qtree) {
-        return this.rulesTranslator.convertQTreeToRules(qtree);
+        var rules = this.rulesTranslator.convertQTreeToRules(qtree);
+
+        // we need to check/modify the rules to fit the constraints
+        // that we are using
+        return this.checkRulesConstraints(rules);
       },
 
       /**
@@ -259,20 +283,54 @@ define([
       /**
        * The main logic to execute when we want to update the UI Query Builder
        * using *query string*
+       *
+       * It returns the promise object
        */
       updateQueryBuilder: function(query) {
 
         var self = this;
         //first parse the query string into qtree
-        this.getQTree(query).done(function(apiResponse) {
+        return this.getQTree(query).done(function(apiResponse) {
           var qtree = JSON.parse(apiResponse.get('qtree'));
           // then translate qtree into 'rules'
           var rules = self.getRulesFromQTree(qtree);
           // and update the UI builder with them
           self.setRules(rules);
         });
-      }
+      },
 
+      /**
+       * Check/modify the UI rules as extracted from the QTree
+       * we'll add the specific logic, eg. that certain fields
+       * can use only certain operators (even if the grammar
+       * allows them to use all possible combinations)
+       *
+       * @param UIRules
+       */
+      checkRulesConstraints: function(UIRules) {
+        this._checkRulesConstraints(UIRules);
+        return UIRules;
+      },
+
+      _checkRulesConstraints: function(uiRules) {
+        if (uiRules.field) {
+          var m;
+          if (m = this.operatorMap[uiRules.field]) {
+            if (m[uiRules.operator]) {
+              uiRules.operator = m[uiRules.operator];
+            }
+            else {
+              throw new Error("Operator mapping is missing a value for:" + JSON.stringify(uiRules) + ' we have: ' + JSON.stringify(m));
+            }
+          }
+        }
+
+        if (uiRules.rules) {
+          _.each(uiRules.rules, function(r) {
+            this._checkRulesConstraints(r);
+          }, this);
+        }
+      }
     });
 
     return QueryBuilder;

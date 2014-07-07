@@ -38,12 +38,19 @@ define(['marionette',
 
       activate: function(beehive) {
         this.queryBuilder.activate(beehive);
+        this.beehive = beehive;
       },
 
       onRender: function () {
         this.$("#search-form-container").append(SearchFormTemplate);
         this.$("#field-options div").hoverIntent(this.tempFieldInsert, this.tempFieldClear);
-        this.$("#search-gui").append(this.queryBuilder.$el.html());
+        this.$("#search-gui").append(this.queryBuilder.$el);
+
+        return;
+
+        this.queryBuilder = new QueryBuilderPlugin({el: '#search-gui'});
+        this.queryBuilder.loadCss();
+        this.queryBuilder.activate(this.beehive);
       },
 
       events: {
