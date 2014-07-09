@@ -71,7 +71,14 @@ define(['jquery',
 
         var rules = t.convertQTreeToRules(qtree);
         console.log(JSON.stringify(rules))
-        expect(rules).to.eql({"condition":"DEFOP","rules":[{"rules":[{"condition":"DEFOP","rules":[{"rules":[{"condition":"OR","rules":[{"id":"__all__","field":"__all__","type":"string","operator":"contains","value":"x"},{"id":"__all__","field":"__all__","type":"string","operator":"contains","value":"y"}]}]}]}]}]});
+        expect(rules).to.eql({"condition": "DEFOP", "rules": [
+          {"condition": "DEFOP", "rules": [
+            {"condition": "OR", "rules": [
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "x"},
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "y"}
+            ]}
+          ]}
+        ]});
 
       });
 

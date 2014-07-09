@@ -48,8 +48,8 @@ define(['underscore',
           }
         }))({verbose: false});
 
-        queryBuilder = new QueryBuilderPlugin({el: '#test'});
-        queryBuilder.activate(minsub.beehive.getHardenedInstance());
+        queryBuilder = new QueryBuilderPlugin({el: '#test',
+          qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
 
         done();
       });
@@ -87,12 +87,17 @@ define(['underscore',
       });
 
       it("foo*", function (done) {
-        testQ('foo*', '"foo*"');
+        testQ('foo*', 'foo*');
         done();
       });
 
       it("author:foo", function (done) {
         testQ('author:foo', 'author:foo');
+        done();
+      });
+
+      it("author:foo*", function (done) {
+        testQ('author:foo*', 'author:foo*');
         done();
       });
 
@@ -107,6 +112,7 @@ define(['underscore',
       });
 
       it("(x AND y)", function (done) {
+        testQ('((x AND y))', '(x AND y)');
         testQ('(x AND y)', '(x AND y)');
         done();
       });

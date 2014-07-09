@@ -271,7 +271,7 @@ define(['underscore', 'js/components/api_query'], function (_, ApiQuery) {
         c = s[i];
         if (c == '\\' || c == '+' || c == '-' || c == '!' || c == '(' || c == ')'
           || c == ':' || c == '^' || c == '[' || c == ']' || c == '"'
-          || c == '{' || c == '}' || c == '~' || c == '*' || c == '?'
+          || c == '{' || c == '}' || c == '~' //|| c == '*' || c == '?'
           || c == '|' || c == '&' || c == '/' || c == ' ' || c == '\t') {
           needsQuotes = true;
         }

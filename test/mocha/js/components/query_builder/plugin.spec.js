@@ -53,8 +53,8 @@ define(['jquery',
       });
 
       it("supports the complete loop from the user input through qtree back to string output", function() {
-        var p = new QueryBuilderPlugin({el: '#test'});
-        p.activate(minsub.beehive.getHardenedInstance());
+        var p = new QueryBuilderPlugin({el: '#test',
+          qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
 
         expectedQTree = {"name":"OPERATOR", "label":"AND", "children": [
           {"name":"MODIFIER", "label":"MODIFIER", "children": [
@@ -95,6 +95,81 @@ define(['jquery',
         $qb.find('.rule-container:nth(1) input').val('woe');
 
         expect(p.getQuery()).to.eql('title:joe AND woe');
+
+      });
+
+      it("has isDirty() method", function() {
+        var p = new QueryBuilderPlugin({el: '#test',
+          qtreeGetter: {
+            getQTree: function() {
+              var promise = $.Deferred();
+              promise.resolve({"name":"OPERATOR", "label":"AND", "children": [
+                {"name":"MODIFIER", "label":"MODIFIER", "children": [
+                  {"name":"TMODIFIER", "label":"TMODIFIER", "children": [
+                    {"name":"FIELD", "label":"FIELD", "children": [
+                      {"name":"TERM_NORMAL", "input":"title", "start":0, "end":4},
+                      {"name":"QNORMAL", "label":"QNORMAL", "children": [
+                        {"name":"TERM_NORMAL", "input":"joe", "start":6, "end":8}]
+                      }]
+                    }]
+                  }]
+                }]});
+              return promise;
+            }
+          }});
+
+        p.updateQueryBuilder('doe');
+
+        // quick check the UI is there
+        var $qb = p.$el;
+
+        expect(p.isDirty()).to.be.false;
+
+        // update one of the inputs
+        $qb.find('.rule-container:nth(0) input').val('woe');
+
+        expect(p.isDirty()).to.be.true;
+
+      });
+
+      it("has attachHeartBeat() method", function(done) {
+        var p = new QueryBuilderPlugin({el: '#test',
+          qtreeGetter: {
+            getQTree: function() {
+              var promise = $.Deferred();
+              promise.resolve({"name":"OPERATOR", "label":"AND", "children": [
+                {"name":"MODIFIER", "label":"MODIFIER", "children": [
+                  {"name":"TMODIFIER", "label":"TMODIFIER", "children": [
+                    {"name":"FIELD", "label":"FIELD", "children": [
+                      {"name":"TERM_NORMAL", "input":"title", "start":0, "end":4},
+                      {"name":"QNORMAL", "label":"QNORMAL", "children": [
+                        {"name":"TERM_NORMAL", "input":"joe", "start":6, "end":8}]
+                      }]
+                    }]
+                  }]
+                }]});
+              return promise;
+            }
+          }});
+
+        var spy = sinon.spy();
+        p.attachHeartBeat(spy, 99);
+        p.updateQueryBuilder('title:joe');
+
+        // quick check the UI is there
+        var $qb = p.$el;
+
+        spy.reset();
+
+        // update one of the inputs
+        $qb.find('.rule-container:nth(0) input').val('woe').trigger('change');
+
+        setTimeout(function() {
+          expect(spy.called).to.be.true;
+          expect(p.getQuery()).to.equal('title:woe');
+          done();
+        }, 100)
+
 
       });
 

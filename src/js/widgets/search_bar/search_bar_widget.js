@@ -37,8 +37,19 @@ define(['marionette',
       },
 
       activate: function(beehive) {
-        this.queryBuilder.activate(beehive);
+        this.queryBuilder.setQTreeGetter(QueryBuilderPlugin.buildQTreeGetter(beehive));
+        var that = this;
+        this.queryBuilder.attachHeartBeat(function() {
+          that.onBuilderChange();
+        });
         this.beehive = beehive;
+      },
+
+      onBuilderChange: function() {
+        if (this.queryBuilder.isDirty()) {
+          var newQuery = this.queryBuilder.getQuery();
+          this.setFormVal(newQuery);
+        }
       },
 
       onRender: function () {
@@ -70,6 +81,10 @@ define(['marionette',
 
       getFormVal: function() {
         return this.$(".q").val();
+      },
+
+      setFormVal: function(v) {
+        return this.$(".q").val(v);
       },
 
       onShowForm: function() {

@@ -1,4 +1,12 @@
-
+/**
+ * A plugin to build interactive UI for the search. This plugin can be inserted into
+ * any element on the page; and provides several methods for setting/getting state
+ * of the form.
+ *
+ * Plugin itself does not communicate with API - but if you provide 'qtreeGetter'
+ * that has methods 'getQTree', then it will parse query input automatically.
+ *
+ */
 
 define([
   'underscore',
@@ -21,14 +29,17 @@ define([
   ) {
 
     var QueryBuilder = GenericModule.extend({
-      activate: function(beehive) {
-        this.pubsub = beehive.Services.get('PubSub');
-        this.pubsub.subscribe(this.pubsub.DELIVERING_RESPONSE, _.bind(this.getResponse, this));
-      },
+
 
       initialize: function(options) {
 
+        this._rules = null;
         this.rulesTranslator = new RulesTranslator();
+
+        this.qtreeGetter = options.qtreeGetter || null;
+        if (this.qtreeGetter && !this.qtreeGetter.getQTree) {
+          throw new Error("qtreeGetter must provide method 'getQTree'");
+        }
 
         if (options.el) {
           this.$el = $(options.el);
@@ -92,7 +103,8 @@ define([
 
         // this mapping only needs to contain values that differ from the defaults
         var _singleMap = {
-          'contains': 'is'
+          'contains': 'is',
+          'starts_with': 'starts_with'
           };
         var _allMap = {
           'starts_with': 'contains',
@@ -202,6 +214,7 @@ define([
        * @param rules
        */
       setRules: function(rules) {
+        this._rules = rules;
         this.$el.queryBuilder('setRules', rules);
       },
 
@@ -218,6 +231,7 @@ define([
        * Resets the query builde UI
        */
       reset: function() {
+        this._rules = null;
         this.$el.queryBuilder('reset');
       },
 
@@ -235,22 +249,12 @@ define([
         var query = this.rulesTranslator.buildQuery(rules);
 
         // final modifications (removing some of the unnecessary details)
-        return query.split(' DEFOP ').join(' ').split('__all__:').join('');
+        if (query)
+          return query.split(' DEFOP ').join(' ').split('__all__:').join('');
+
+        return '';
       },
 
-      /**
-       * Given an ApiQuery - asks SOLR to give us QTREE; this function
-       * will return a promise. When the promise is resolved, the function
-       * will receive ApiResponse
-       *
-       * @param query
-       * @returns {*}
-       */
-      getQTree: function(query) {
-        this.promise = $.Deferred();
-        this.pubsub.publish(this.pubsub.GET_QTREE, new ApiQuery({'q': query}));
-        return this.promise;
-      },
 
 
       /**
@@ -267,32 +271,27 @@ define([
         return this.checkRulesConstraints(rules);
       },
 
-      /**
-       * This function receives ApiResponse from the PubSub - usually as a
-       * response to the request to parse a query.
-       *
-       * @param apiResponse
-       */
-      getResponse: function(apiResponse) {
-        if (this.promise) {
-          this.promise.resolve(apiResponse);
-        }
-      },
+
 
 
       /**
        * The main logic to execute when we want to update the UI Query Builder
        * using *query string*
        *
-       * It returns the promise object
+       * It returns the promise object from the QTreeGetter
+       *
+       * @see: this.buildQTreeGetter
        */
       updateQueryBuilder: function(query) {
 
+        if (!this.qtreeGetter) {
+          throw new Error('You must provide qtreeGetter object for this to work');
+        }
+
         var self = this;
         //first parse the query string into qtree
-        return this.getQTree(query).done(function(apiResponse) {
-          var qtree = JSON.parse(apiResponse.get('qtree'));
-          // then translate qtree into 'rules'
+        return this.qtreeGetter.getQTree(query).done(function(qtree) {
+          //translate qtree into 'rules'
           var rules = self.getRulesFromQTree(qtree);
           // and update the UI builder with them
           self.setRules(rules);
@@ -330,8 +329,108 @@ define([
             this._checkRulesConstraints(r);
           }, this);
         }
+      },
+
+
+      /**
+       * Returns true if the UI was changed (ie. user did something that changed the
+       * original parse tree)
+       *
+       */
+      isDirty: function() {
+        try {
+          if (this._rules && this.getQuery(this._rules) != this.getQuery()) {
+            return true;
+          }
+        }
+        catch(err) {
+          console.trace(err);
+          return true;
+        }
+        return false;
+      },
+
+
+      setQTreeGetter: function(getter) {
+        this.qtreeGetter = getter;
+      },
+
+      /**
+       * Attach a monitor to the UI - the callback will be called
+       * once there is a change to the UI (ie. user initiated change)
+       *
+       * @param callback
+       * @param delay
+       */
+      attachHeartBeat: function(callback, delay) {
+        if (!delay) {
+          delay = 100;
+        }
+
+        var throttled = _.debounce(callback, delay);
+
+        this.$el.on('change.queryBuilder', function(ev) {
+          throttled();
+        });
+        this.$el.on('click.queryBuilder', function(ev) {
+          throttled();
+        });
+        this.$el.on('keypress.input', function(ev) {
+          throttled();
+        });
       }
+
     });
+
+    /**
+     * Convenience method to build a QTree getter object; it requires access
+     * to the BeehIVE (PubSub)
+     *
+     * @param beehive
+     */
+    QueryBuilder.buildQTreeGetter = function(beehive) {
+
+      var getter = function(beehive) {
+        this.activate(beehive);
+      };
+
+      _.extend(getter.prototype, {
+
+        activate: function(beehive) {
+          this.pubsub = beehive.Services.get('PubSub');
+          this.pubsub.subscribe(this.pubsub.DELIVERING_RESPONSE, _.bind(this.getResponse, this));
+        },
+
+        /**
+         * Given an ApiQuery - asks SOLR to give us QTREE; this function
+         * will return a promise. When the promise is resolved, the function
+         * will receive ApiResponse
+         *
+         * @param query
+         * @returns {Deferred}
+         */
+        getQTree: function(query) {
+          this.promise = $.Deferred();
+          this.pubsub.publish(this.pubsub.GET_QTREE, new ApiQuery({'q': query}));
+          return this.promise;
+        },
+
+        /**
+         * This function receives ApiResponse from the PubSub - usually as a
+         * response to the request to parse a query.
+         *
+         * @param apiResponse
+         */
+        getResponse: function(apiResponse) {
+          var qtree = JSON.parse(apiResponse.get('qtree'));
+          if (this.promise && qtree) {
+            this.promise.resolve(qtree);
+          }
+        }
+      });
+
+      return new getter(beehive);
+    };
 
     return QueryBuilder;
   });

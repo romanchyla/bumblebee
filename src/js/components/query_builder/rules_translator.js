@@ -39,7 +39,7 @@ define(['underscore',
       });
 
       var q = queries.join(' ' + this.operator + ' ');
-      if (level > 2)
+      if (level > 1)
         q = "(" + q + ")";
       return q;
     };
@@ -124,7 +124,7 @@ define(['underscore',
       setOperator: function(o) {
         this.operator = o;
       },
-      addGroup: function(ruleNode) {
+      addChild: function(ruleNode) {
         this.rules = this.rules || [];
         this.rules.push(ruleNode);
       }
@@ -179,15 +179,9 @@ define(['underscore',
 
         this._parentize(qtree, qtree);
 
-        var root = new RuleNode();
-        if (qtree.name == 'OPERATOR') {
-          root.setCondition(qtree.label);
-          this._extractRules(qtree.children, root);
-        }
-        else {
-          root.setCondition('DEFOP');
-          this._extractRules(qtree, root);
-        }
+        var root = this._extractRules(qtree);
+
+        //console.log('convertQTreeToRules', JSON.stringify(root.toJSON()));
         return root.toJSON();
       },
 
@@ -210,18 +204,11 @@ define(['underscore',
         })
       },
 
-      _extractRules: function(qtree, ruleNode) {
-        var self = this;
-        if (_.isArray(qtree)) {
-          _.each(qtree, function(r) {
-            var rn = new RuleNode();
-            self._extractRule(r, rn);
-            ruleNode.addGroup(rn);
-          });
-        }
-        else {
-          var node = this._extractRule(qtree, ruleNode);
-        }
+      _extractRules: function(qtree) {
+
+        var root = new RuleNode();
+        this._extractRule(qtree, root);
+        return root;
       },
 
       _extractRule: function(qtree, ruleNode) { // ruleNode can be null
@@ -231,17 +218,21 @@ define(['underscore',
 
         switch (qtree.name) {
           case 'OPERATOR':
-            var newGroup = new RuleNode();
-            newGroup.setCondition(qtree.label);
-            ruleNode.addGroup(newGroup);
-            this._extractRules(qtree.children, newGroup);
+
+            ruleNode.setCondition(qtree.label);
+            _.each(qtree.children, function(child) {
+              var newGroup = new RuleNode();
+              this._extractRule(child, newGroup);
+              ruleNode.addChild(newGroup);
+            }, this);
+
             break;
           case 'FIELD':
             if (qtree.children.length == 2) {
 
               if (qtree.children[1].name == 'OPERATOR') { // field:(foo bar)
                 var field = qtree.children[0].input;
-                this._extractRules(qtree.children[1].children, ruleNode);
+                this._extractRule(qtree.children[1].children, ruleNode);
                 _.each(ruleNode, function(n) {
                   if (n instanceof RuleNode) {
                     n.setField(field);
@@ -290,14 +281,20 @@ define(['underscore',
             ruleNode.setOperator('is');
             break;
           case 'QPHRASETRUNC':
-            var input =  qtree.children[0].input;
-            ruleNode.setValue(input.substring(1, input-1));
+            var input =  qtree.children[0].input.trim();
+            if (input.substring(input.length-1) == '*') {
+              input = input.substring(0, input.length-1);
+            }
+            ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start+1);
             ruleNode.setEnd(qtree.children[0].end-1);
             ruleNode.setOperator('starts_with');
             break;
           case 'QTRUNCATED':
-            var input =  qtree.children[0].input;
+            var input =  qtree.children[0].input.trim();
+            if (input.substring(input.length-1) == '*') {
+              input = input.substring(0, input.length-1);
+            }
             ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start);
             ruleNode.setEnd(qtree.children[0].end);
@@ -322,6 +319,7 @@ define(['underscore',
         }
 
 
+        //console.log('_extractRule', qtree.name, JSON.stringify(ruleNode));
         return ruleNode;
       },
 
