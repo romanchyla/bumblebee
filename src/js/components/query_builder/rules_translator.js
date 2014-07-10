@@ -39,7 +39,7 @@ define(['underscore',
       });
 
       var q = queries.join(' ' + this.operator + ' ');
-      if (level > 1)
+      if (level > 0)
         q = "(" + q + ")";
       return q;
     };
@@ -185,6 +185,7 @@ define(['underscore',
         return root.toJSON();
       },
 
+
       /**
        * Adds reference to the parent to each of the node
        *
@@ -219,6 +220,11 @@ define(['underscore',
         switch (qtree.name) {
           case 'OPERATOR':
 
+            if (qtree.children.length == 1) {
+              this._extractRule(qtree.children[0], ruleNode);
+              break;
+            }
+
             ruleNode.setCondition(qtree.label);
             _.each(qtree.children, function(child) {
               var newGroup = new RuleNode();
@@ -227,6 +233,32 @@ define(['underscore',
             }, this);
 
             break;
+          case 'CLAUSE':
+
+            var childr = qtree;
+            while (childr.children && childr.children.length == 1 && childr.children[0].name == 'OPERATOR') {
+              childr = childr.children[0];
+            }
+
+            if (childr !== qtree) {
+              ruleNode.setCondition(childr.label);
+              _.each(childr.children, function(child) {
+                var newGroup = new RuleNode();
+                this._extractRule(child, newGroup);
+                ruleNode.addChild(newGroup);
+              }, this);
+              break;
+            }
+
+            throw Error('fooooooo');
+            _.each(qtree.children, function(child) {
+              var newGroup = new RuleNode();
+              this._extractRule(child, newGroup);
+              ruleNode.addChild(newGroup);
+            }, this);
+
+            break;
+
           case 'FIELD':
             if (qtree.children.length == 2) {
 
