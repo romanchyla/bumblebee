@@ -49,7 +49,9 @@ define([
         }
 
         $.fn.queryBuilder.defaults.set({
+          conditions: ['AND', 'OR', 'DEFOP'],
           lang: {
+            "defop_condition": "Space",
             "operator_is_exactly": "is exactly",
             "operator_is": "is",
             "operator_is_not": "is not",
