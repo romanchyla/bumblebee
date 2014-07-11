@@ -1,24 +1,18 @@
-
 define(['jquery',
   'underscore',
   'js/components/query_builder/plugin',
   'js/components/generic_module',
   'js/bugutils/minimal_pubsub'
-], function(
-  $,
-  _,
-  QueryBuilderPlugin,
-  GenericModule,
-  MinimalPubsub) {
+], function ($, _, QueryBuilderPlugin, GenericModule, MinimalPubsub) {
 
   describe("QueryBuilder Query to UI (translation rules)", function () {
 
 
       var minsub, expectedQTree;
-      beforeEach(function(done) {
+      beforeEach(function (done) {
 
         minsub = new (MinimalPubsub.extend({
-          request: function(apiRequest) {
+          request: function (apiRequest) {
             var query = apiRequest.get('query');
             return {'responseHeader': {'status': 0, 'QTime': 0, params: query.toJSON()},
               'qtree': JSON.stringify(expectedQTree)};
@@ -27,7 +21,7 @@ define(['jquery',
         done();
       });
 
-      afterEach(function(done) {
+      afterEach(function (done) {
         minsub.close();
         var ta = $('#test');
         if (ta) {
@@ -37,51 +31,42 @@ define(['jquery',
       });
 
 
-
-      it.skip("query #1", function(done) {
+      it("foo", function (done) {
         var p = new QueryBuilderPlugin(
           {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
 
 
-        expectedQTree = {"name":"OPERATOR", "label":"DEFOP", "children": [
-          {"name":"MODIFIER", "label":"MODIFIER", "children": [
-            {"name":"TMODIFIER", "label":"TMODIFIER", "children": [
-              {"name":"FIELD", "label":"FIELD", "children": [
-                {"name":"TERM_NORMAL", "input":"title", "start":0, "end":4},
-                {"name":"QNORMAL", "label":"QNORMAL", "children": [
-                  {"name":"TERM_NORMAL", "input":"joe", "start":6, "end":8}]
-                }]
-              }]
-            }]
-          },
-          {"name":"MODIFIER", "label":"MODIFIER", "children": [
-            {"name":"TMODIFIER", "label":"TMODIFIER", "children": [
-              {"name":"FIELD", "label":"FIELD", "children": [
-                {"name":"QNORMAL", "label":"QNORMAL", "children": [
-                  {"name":"TERM_NORMAL", "input":"doe", "start":10, "end":12}]
-                }]
-              }]
-            }]
-          }]
-        };
+        expectedQTree = {"name": "OPERATOR", "label": "DEFOP", "children": [
+          {"name": "MODIFIER", "label": "MODIFIER", "children": [
+            {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+              {"name": "FIELD", "label": "FIELD", "children": [
+                {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                  {"name": "TERM_NORMAL", "input": "foo", "start": 0, "end": 2}
+                ] }
+              ] }
+            ] }
+          ] }
+        ] };
 
-        var promise = p.getQTree("author:Roman AND (title:galaxy OR abstract:42)");
+        var promise = p.updateQueryBuilder("foo");
 
-        promise.done(function(apiResponse) {
-          var qtree = JSON.parse(apiResponse.get('qtree'));
-          expect(qtree).to.be.eql(expectedQTree);
-
+        promise.done(function (qtree) {
           var rules = p.getRulesFromQTree(qtree);
 
-          expect(p.getQuery(rules)).to.be.eql("title:joe doe");
+          var expected =
+          {"rules": [
+            {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "foo"}
+          ]};
+
+          expect(rules.toJSON()).to.be.eql(expected);
+          expect(p.getQuery(rules)).to.be.eql("foo");
 
           done();
         });
 
       });
 
-
-      it("title:foo AND (bar OR bla)", function(done) {
+      it("title:foo AND (bar OR bla)", function (done) {
         var p = new QueryBuilderPlugin(
           {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
 
@@ -127,18 +112,19 @@ define(['jquery',
 
         var promise = p.updateQueryBuilder("title:foo AND (bar OR bla)");
 
-        promise.done(function(qtree) {
+        promise.done(function (qtree) {
           var rules = p.getRulesFromQTree(qtree);
 
           var expected =
-            {"condition": "AND", "rules": [
-              {"id": "title", "field": "title", "type": "string", "operator": "contains", "value": "foo"},
-              {"condition": "OR", "rules": [
-                {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bar"},
-                {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bla"}
-              ]}
-            ]};
+          {"condition": "AND", "rules": [
+            {"id": "title", "field": "title", "type": "string", "operator": "contains", "value": "foo"},
+            {"condition": "OR", "rules": [
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bar"},
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bla"}
+            ]}
+          ]};
 
+          expect(rules.toJSON()).to.be.eql(expected);
           expect(p.getQuery(rules)).to.be.eql("title:foo AND (bar OR bla)");
 
           done();
@@ -147,6 +133,60 @@ define(['jquery',
       });
 
 
+      it("title:(foo bar)", function (done) {
+        var p = new QueryBuilderPlugin(
+          {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
+
+
+        expectedQTree = {"name": "OPERATOR", "label": "DEFOP", "children": [
+          {"name": "MODIFIER", "label": "MODIFIER", "children": [
+            {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+              {"name": "FIELD", "label": "FIELD", "children": [
+                {"name": "TERM_NORMAL", "input": "title", "start": 0, "end": 4},
+                {"name": "CLAUSE", "label": "CLAUSE", "children": [
+                  {"name": "OPERATOR", "label": "DEFOP", "children": [
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                            {"name": "TERM_NORMAL", "input": "foo", "start": 7, "end": 9}
+                          ] }
+                        ] }
+                      ] }
+                    ] },
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                            {"name": "TERM_NORMAL", "input": "bar", "start": 11, "end": 13}
+                          ] }
+                        ] }
+                      ] }
+                    ] }
+                  ] }
+                ] }
+              ] }
+            ] }
+          ] }
+        ] };
+
+        var promise = p.updateQueryBuilder("title:(foo bar)");
+
+        promise.done(function (qtree) {
+          var rules = p.getRulesFromQTree(qtree);
+
+          var expected =
+          {"rules": [
+            {"id": "title", "field": "title", "type": "string", "operator": "contains", "value": "foo bar"}
+          ]};
+
+          expect(rules.toJSON()).to.be.eql(expected);
+          expect(p.getQuery(rules)).to.be.eql("title:(foo bar)");
+
+          done();
+        });
+
+      });
     }
   );
 });

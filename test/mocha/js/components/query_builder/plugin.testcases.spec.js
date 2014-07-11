@@ -66,7 +66,7 @@ define(['underscore',
       var testQ = function(inputString, expectedString, expectedUIRules) {
         var promise = queryBuilder.updateQueryBuilder(inputString);
         promise.done(function(apiResponse) {
-          console.log(inputString, JSON.stringify(queryBuilder.getRules()));
+          console.log(inputString, "\n   ", JSON.stringify(queryBuilder.getRules()));
           if (expectedString)
             expect(queryBuilder.getQuery()).to.be.equal(expectedString);
           if (expectedUIRules)
@@ -81,7 +81,7 @@ define(['underscore',
       });
 
       // TODO: I must deploy updated qtree version
-      it.skip("\"phrase\"", function (done) {
+      it("\"phrase\"", function (done) {
         testQ('"foo"', '"foo"');
         done();
       });
@@ -112,15 +112,16 @@ define(['underscore',
       });
 
       it("(x AND y)", function (done) {
+        testQ('(x AND y)', 'x AND y');
+        testQ('(x and y)', 'x AND y');
         testQ('((x AND y))', '(x AND y)');
-        testQ('(x AND y)', '(x AND y)');
         done();
       });
 
       it("(x OR y)", function (done) {
-        testQ('(x OR y)', '(x OR y)');
-        testQ('(x or y)', '(x OR y)');
-        testQ('((x OR y))', '((x OR y))');
+        testQ('(x OR y)', 'x OR y');
+        testQ('(x or y)', 'x OR y');
+        testQ('((x OR y))', '(x OR y)');
         done();
       });
 

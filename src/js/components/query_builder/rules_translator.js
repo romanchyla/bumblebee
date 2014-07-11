@@ -39,8 +39,10 @@ define(['underscore',
       });
 
       var q = queries.join(' ' + this.operator + ' ');
-      if (level > 0)
+      if (level > 0) {
         q = "(" + q + ")";
+      }
+
       return q;
     };
 
@@ -107,6 +109,9 @@ define(['underscore',
       },
       setEnd: function(x) {
         this.end = x;
+      },
+      getField: function() {
+        return this.field;
       },
       setField: function(f) {
         this.field = f;
@@ -181,8 +186,15 @@ define(['underscore',
 
         var root = this._extractRules(qtree);
 
+        if (!root.rules) {
+          var r = new RuleNode();
+          r.addChild(root);
+          root = r;
+        }
+
         //console.log('convertQTreeToRules', JSON.stringify(root.toJSON()));
-        return root.toJSON();
+        //return root.toJSON();
+        return root;
       },
 
 
@@ -250,26 +262,26 @@ define(['underscore',
               break;
             }
 
-            throw Error('fooooooo');
-            _.each(qtree.children, function(child) {
-              var newGroup = new RuleNode();
-              this._extractRule(child, newGroup);
-              ruleNode.addChild(newGroup);
-            }, this);
-
             break;
 
           case 'FIELD':
             if (qtree.children.length == 2) {
 
-              if (qtree.children[1].name == 'OPERATOR') { // field:(foo bar)
+              if (qtree.children[1].name == 'CLAUSE') { // field:(foo bar)
                 var field = qtree.children[0].input;
-                this._extractRule(qtree.children[1].children, ruleNode);
-                _.each(ruleNode, function(n) {
-                  if (n instanceof RuleNode) {
-                    n.setField(field);
-                  }
-                })
+                var values = [];
+
+                _.each(qtree.children[1].children, function(qt) {
+                  var rule = new RuleNode();
+                  this._extractRule(qt, rule);
+                  values.push(this.buildQuery(rule));
+                }, this);
+
+                var result = new RuleNode();
+                result.setField(field);
+                result.setValue(values.join(' '));
+                result.setOperator('contains');
+                ruleNode.addChild(result);
               }
               else {
                 ruleNode.setField(qtree.children[0].input);
@@ -307,7 +319,7 @@ define(['underscore',
             break;
           case 'QPHRASE':
             var input =  qtree.children[0].input;
-            ruleNode.setValue(input.substring(1, input-1));
+            ruleNode.setValue(input.substring(1, input.length-1));
             ruleNode.setOffset(qtree.children[0].start+1);
             ruleNode.setEnd(qtree.children[0].end-1);
             ruleNode.setOperator('is');
@@ -409,7 +421,10 @@ define(['underscore',
           var root = new TreeNode(rules.condition);
           var tree = this._buildQueryTree(root, rules.rules);
           if (tree) {
-            return tree.toString();
+
+            // final modifications (removing some of the unnecessary details)
+            return tree.toString().split(' DEFOP ').join(' ').split('__all__:').join('');
+
           }
           return '';
         }
@@ -443,6 +458,21 @@ define(['underscore',
         if (rule.type == 'string') {
           var input = rule.value.trim();
           switch(rule.operator) {
+
+            case 'contains_phrase':
+            case 'contains_not_phrase':
+              field = rule.field;
+              val = this.apiQueryUpdater.quote(input);
+              if (field) {
+                q = field + ':' + val;
+              }
+              else {
+                q = val;
+              }
+              if (rule.operator.indexOf('_not') > -1)
+                q = '-' + q;
+              break;
+
             case 'is':
             case 'is_not':
               field = rule.field;
@@ -507,6 +537,7 @@ define(['underscore',
             default:
               throw new Error('Unknow operator: ' + rule.operator);
           }
+
           return new TreeNode('', q);
         }
         else {

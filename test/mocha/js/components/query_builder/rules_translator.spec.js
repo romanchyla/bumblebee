@@ -12,7 +12,7 @@ define(['jquery',
   describe("QueryBuilder - Rule Translator (component)", function () {
 
 
-      it("qtree -> rules", function() {
+      it.skip("qtree -> rules", function() {
 
         var t = new RulesTranslator();
         var qtree = {"name":"OPERATOR", "label":"DEFOP", "children": [
@@ -42,7 +42,7 @@ define(['jquery',
         expect(rules).to.eql({"condition":"DEFOP","rules":[{"id":"title","field":"title","type":"string","operator":"contains","value":"joe"},{"id":"__all__","field":"__all__","type":"string","operator":"contains","value":"doe"}]});
       });
 
-      it("(x OR y)", function() {
+      it.skip("(x OR y)", function() {
         var t = new RulesTranslator();
         var qtree = {"name":"OPERATOR", "label":"DEFOP", "children": [
           {"name":"OPERATOR", "label":"DEFOP", "children": [

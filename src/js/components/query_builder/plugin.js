@@ -96,7 +96,7 @@ define([
         });
 
         var singleTokenOperators = ['is', 'starts_with', 'is_exactly', 'is_not', 'starts_not_with', 'is_not_empty'];
-        var multiTokenOperators = ['contains', 'contains_phrase', 'contains_not', 'contains_not_phrase', 'is_not_empty'];
+        var multiTokenOperators = ['contains', 'contains_phrase', 'contains_not', 'contains_not_phrase', 'is_not_empty', 'starts_with'];
         var functionOperators = ['is', 'is_not'];
 
         this.singleTokenOperators = singleTokenOperators;
@@ -109,8 +109,9 @@ define([
           'starts_with': 'starts_with'
           };
         var _allMap = {
-          'starts_with': 'contains',
-          'contains': 'contains'
+          'starts_with': 'starts_with',
+          'contains': 'contains',
+          'is': 'contains_phrase'
         };
 
         this.operatorMap = {
@@ -250,11 +251,8 @@ define([
 
         var query = this.rulesTranslator.buildQuery(rules);
 
-        // final modifications (removing some of the unnecessary details)
-        if (query)
-          return query.split(' DEFOP ').join(' ').split('__all__:').join('');
+        return query || '';
 
-        return '';
       },
 
 
