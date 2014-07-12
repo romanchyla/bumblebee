@@ -84,11 +84,11 @@ define(['jquery',
         var $qb = p.$el;
 
         expect($qb.find('.rule-container:first select:nth(0)').val()).to.eql('title');
-        expect($qb.find('.rule-container:first select:nth(1)').val()).to.eql('contains');
+        expect($qb.find('.rule-container:first select:nth(1)').val()).to.eql('is');
         expect($qb.find('.rule-container:first input').val()).to.eql('joe');
 
         expect($qb.find('.rule-container:nth(1) select:nth(0)').val()).to.eql('__all__');
-        expect($qb.find('.rule-container:nth(1) select:nth(1)').val()).to.eql('contains');
+        expect($qb.find('.rule-container:nth(1) select:nth(1)').val()).to.eql('is');
         expect($qb.find('.rule-container:nth(1) input').val()).to.eql('doe');
 
         // update one of the inputs

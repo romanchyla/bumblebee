@@ -55,7 +55,7 @@ define(['jquery',
 
           var expected =
           {"rules": [
-            {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "foo"}
+            {"id": "__all__", "field": "__all__", "type": "string", "operator": "is", "value": "foo"}
           ]};
 
           expect(rules.toJSON()).to.be.eql(expected);
@@ -117,10 +117,10 @@ define(['jquery',
 
           var expected =
           {"condition": "AND", "rules": [
-            {"id": "title", "field": "title", "type": "string", "operator": "contains", "value": "foo"},
+            {"id": "title", "field": "title", "type": "string", "operator": "is", "value": "foo"},
             {"condition": "OR", "rules": [
-              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bar"},
-              {"id": "__all__", "field": "__all__", "type": "string", "operator": "contains", "value": "bla"}
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "is", "value": "bar"},
+              {"id": "__all__", "field": "__all__", "type": "string", "operator": "is", "value": "bla"}
             ]}
           ]};
 

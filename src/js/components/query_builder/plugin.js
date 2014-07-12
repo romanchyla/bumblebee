@@ -49,18 +49,24 @@ define([
         }
 
         $.fn.queryBuilder.defaults.set({
-          conditions: ['AND', 'OR', 'DEFOP'],
+          conditions: ['AND', 'OR'],
           lang: {
             "defop_condition": "Space",
-            "operator_is_exactly": "is exactly",
+
             "operator_is": "is",
-            "operator_is_not": "is not",
-            "operator_starts_with": "starts with",
-            "operator_starts_not_with": "doesn't start with",
-            "operator_contains": "contains word(s)",
-            "operator_contains_not": "doesn't contain word(s)",
-            "operator_contains_phrase": "contains phrase",
-            "operator_contains_not_phrase": "doesn't have phrase",
+            "operator_is_not": "is",
+            "operator_is_exactly": "is exactly",
+
+            "operator_contains": "has words",
+            "operator_contains_not": "excludes words",
+
+            "operator_is_wildcard": "starts with",
+            "operator_is_not_wildcard": "doesn't start with",
+
+
+            "operator_is_phrase": "has phrase",
+            "operator_is_wildphrase": "has wildcard",
+            "operator_is_not_phrase": "excludes phrase",
             "operator_is_not_empty": "is not empty",
 
             "operator_f_pos": "Limit by Position",
@@ -72,19 +78,26 @@ define([
           },
           operators: [
             {type: 'is',               accept_values: true,  apply_to: ['string', 'number', 'datetime']},
-            {type: 'is_exactly',       accept_values: true,  apply_to: ['string', 'number', 'datetime']},
             {type: 'is_not',           accept_values: true,  apply_to: ['string', 'number', 'datetime']},
+            {type: 'is_exactly',       accept_values: true,  apply_to: ['string', 'number', 'datetime']},
+
+            {type: 'contains',         accept_values: true,  apply_to: ['string']},
+            {type: 'contains_not',     accept_values: true,  apply_to: ['string']},
+            {type: 'is_phrase',        accept_values: true,  apply_to: ['string']},
+            {type: 'is_wildphrase',        accept_values: true,  apply_to: ['string']},
+            {type: 'is_not_phrase',    accept_values: true,  apply_to: ['string']},
+
+            {type: 'is_wildcard',      accept_values: true,  apply_to: ['string']},
+            {type: 'is_not_wildcard',  accept_values: true,  apply_to: ['string']},
+
+            {type: 'is_empty',         accept_values: false, apply_to: ['string']},
+            {type: 'is_not_empty',     accept_values: false, apply_to: ['string']},
+
             {type: 'less',             accept_values: true,  apply_to: ['number', 'datetime']},
             {type: 'less_or_equal',    accept_values: true,  apply_to: ['number', 'datetime']},
             {type: 'greater',          accept_values: true,  apply_to: ['number', 'datetime']},
             {type: 'greater_or_equal', accept_values: true,  apply_to: ['number', 'datetime']},
-            {type: 'starts_with',      accept_values: true,  apply_to: ['string']},
-            {type: 'starts_not_with',  accept_values: true,  apply_to: ['string']},
-            {type: 'contains',         accept_values: true,  apply_to: ['string']},
-            {type: 'contains_not',     accept_values: true,  apply_to: ['string']},
-            {type: 'contains_phrase',  accept_values: true,  apply_to: ['string']},
-            {type: 'contains_not_phrase', accept_values: true,  apply_to: ['string']},
-            {type: 'is_not_empty',     accept_values: false, apply_to: ['string']},
+
 
             {type: 'f_pos',            accept_values: true, apply_to: ['string']},
             {type: 'f_citations',      accept_values: true, apply_to: ['string']},
@@ -95,51 +108,35 @@ define([
           ]
         });
 
-        var singleTokenOperators = ['is', 'starts_with', 'is_exactly', 'is_not', 'starts_not_with', 'is_not_empty'];
-        var multiTokenOperators = ['contains', 'contains_phrase', 'contains_not', 'contains_not_phrase', 'is_not_empty', 'starts_with'];
+        var singleTokenOperators = ['is', 'is_wildcard', 'is_exactly', 'is_not', 'is_not_wildcard', 'is_not_empty'];
+        var multiTokenOperators = ['contains', 'is_phrase', 'contains_not', 'is_not_phrase', 'is_not_empty', 'is_wildcard'];
         var functionOperators = ['is', 'is_not'];
 
         this.singleTokenOperators = singleTokenOperators;
         this.multiTokenOperators = multiTokenOperators;
         this.functionOperators = functionOperators;
 
-        // this mapping only needs to contain values that differ from the defaults
-        var _singleMap = {
-          'contains': 'is',
-          'starts_with': 'starts_with'
-          };
-        var _allMap = {
-          'starts_with': 'starts_with',
-          'contains': 'contains',
-          'is': 'contains_phrase'
-        };
-
-        this.operatorMap = {
-          author: _singleMap,
-          keyword: _singleMap,
-          '__all__': _allMap
-        };
 
         this.$el.queryBuilder({
-          sortable: true,
+          sortable: false,
 
           filters: [
             {id: 'author', label: 'Author', type: 'string', placeholder: 'Planck, Max',
-              operators: singleTokenOperators},
+              operators: singleTokenOperators, createOperatorIfNecessary: true},
             {id: '^author', label: 'First Author', type: 'string', placeholder: 'Einstein, A',
-              operators: singleTokenOperators},
+              operators: singleTokenOperators, createOperatorIfNecessary: true},
             {id: 'title', label: 'Title', type: 'string',
-              operators: multiTokenOperators},
+              operators: multiTokenOperators, createOperatorIfNecessary: true},
             {id: '__all__', label: 'Any Field', type: 'string',
-              operators: multiTokenOperators},
+              operators: multiTokenOperators, createOperatorIfNecessary: true},
             {id: 'abstract', label: 'Abstract', type: 'string',
-              operators: multiTokenOperators},
+              operators: multiTokenOperators, createOperatorIfNecessary: true},
             {id: 'keyword', label: 'Keyword', type: 'string',
-              operators: singleTokenOperators},
+              operators: singleTokenOperators, createOperatorIfNecessary: true},
             {id: 'full', label: 'Fulltext', type: 'string',
-              operators: multiTokenOperators},
+              operators: multiTokenOperators, createOperatorIfNecessary: true},
             {id: 'function', label: 'Function', type: 'string',
-              operators: functionOperators},
+              operators: functionOperators, createOperatorIfNecessary: true},
             {id: 'f_pos', label: 'Match by Position()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
@@ -312,7 +309,7 @@ define([
       },
 
       _checkRulesConstraints: function(uiRules) {
-        if (uiRules.field) {
+        /*if (uiRules.field) {
           var m;
           if (m = this.operatorMap[uiRules.field]) {
             if (m[uiRules.operator]) {
@@ -322,7 +319,7 @@ define([
               throw new Error("Operator mapping is missing a value for:" + JSON.stringify(uiRules) + ' we have: ' + JSON.stringify(m));
             }
           }
-        }
+        }*/
 
         if (uiRules.rules) {
           _.each(uiRules.rules, function(r) {

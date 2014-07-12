@@ -315,14 +315,14 @@ define(['underscore',
             ruleNode.setValue(qtree.children[0].input);
             ruleNode.setOffset(qtree.children[0].start);
             ruleNode.setEnd(qtree.children[0].end);
-            ruleNode.setOperator('contains');
+            ruleNode.setOperator('is');
             break;
           case 'QPHRASE':
             var input =  qtree.children[0].input;
             ruleNode.setValue(input.substring(1, input.length-1));
             ruleNode.setOffset(qtree.children[0].start+1);
             ruleNode.setEnd(qtree.children[0].end-1);
-            ruleNode.setOperator('is');
+            ruleNode.setOperator('is_phrase');
             break;
           case 'QPHRASETRUNC':
             var input =  qtree.children[0].input.trim();
@@ -332,7 +332,7 @@ define(['underscore',
             ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start+1);
             ruleNode.setEnd(qtree.children[0].end-1);
-            ruleNode.setOperator('starts_with');
+            ruleNode.setOperator('is_wildphrase');
             break;
           case 'QTRUNCATED':
             var input =  qtree.children[0].input.trim();
@@ -342,7 +342,7 @@ define(['underscore',
             ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start);
             ruleNode.setEnd(qtree.children[0].end);
-            ruleNode.setOperator('starts_with');
+            ruleNode.setOperator('is_wildcard');
             break;
           case 'QRANGEEX':
           case 'QRANGEIN':
@@ -459,8 +459,8 @@ define(['underscore',
           var input = rule.value.trim();
           switch(rule.operator) {
 
-            case 'contains_phrase':
-            case 'contains_not_phrase':
+            case 'is_phrase':
+            case 'is_not_phrase':
               field = rule.field;
               val = this.apiQueryUpdater.quote(input);
               if (field) {
@@ -512,8 +512,8 @@ define(['underscore',
               if (rule.operator.indexOf('_not_') > -1)
                 q = 'NOT ' + q;
               break;
-            case 'starts_with':
-            case 'starts_not_with':
+            case 'is_wildcard':
+            case 'is_not_wildcard':
               field = rule.field || '__all__';
               if (input.indexOf('*') > -1) { // user input contains '*' - they should know what they do
                 input = this.apiQueryUpdater.quoteIfNecessary(input);
@@ -535,7 +535,7 @@ define(['underscore',
 
 
             default:
-              throw new Error('Unknow operator: ' + rule.operator);
+              throw new Error('Unknown operator: ' + rule.operator);
           }
 
           return new TreeNode('', q);
