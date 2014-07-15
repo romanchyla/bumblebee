@@ -57,6 +57,9 @@ define([
             "operator_is_not": "is",
             "operator_is_exactly": "is exactly",
 
+            "operator_is_function": "matches",
+            "operator_is_not_function": "doesn't match",
+
             "operator_contains": "has words",
             "operator_contains_not": "excludes words",
 
@@ -122,7 +125,7 @@ define([
 
         var singleTokenOperators = ['is', 'is_wildcard', 'is_exactly', 'is_not', 'is_not_wildcard', 'is_not_empty'];
         var multiTokenOperators = ['contains', 'is_phrase', 'contains_not', 'is_not_phrase', 'is_not_empty', 'is_wildcard'];
-        var functionOperators = ['is', 'is_not'];
+        var functionOperators = ['is_function', 'is_not_function'];
 
         this.singleTokenOperators = singleTokenOperators;
         this.multiTokenOperators = multiTokenOperators;
@@ -149,7 +152,7 @@ define([
               operators: multiTokenOperators, createOperatorIfNecessary: true},
             {id: 'function', label: 'Function', type: 'string',
               operators: functionOperators, createOperatorIfNecessary: true},
-            {id: 'f_pos', label: 'Match by Position()', type: 'string',
+            {id: 'pos()', label: 'Match by Position()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
                 var $container = $rule.find('.rule-value-container');
