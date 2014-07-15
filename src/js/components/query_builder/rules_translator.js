@@ -193,8 +193,7 @@ define(['underscore',
         }
 
         //console.log('convertQTreeToRules', JSON.stringify(root.toJSON()));
-        //return root.toJSON();
-        return root;
+        return root.toJSON();
       },
 
 
@@ -328,25 +327,33 @@ define(['underscore',
             var input =  qtree.children[0].input.trim();
             if (input.substring(input.length-1) == '*') {
               input = input.substring(0, input.length-1);
+              ruleNode.setOperator('starts_with');
+            }
+            else {
+              ruleNode.setOperator('is_wildcard');
             }
             ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start+1);
             ruleNode.setEnd(qtree.children[0].end-1);
-            ruleNode.setOperator('is_wildphrase');
             break;
           case 'QTRUNCATED':
             var input =  qtree.children[0].input.trim();
             if (input.substring(input.length-1) == '*') {
               input = input.substring(0, input.length-1);
+              ruleNode.setOperator('starts_with');
+            }
+            else {
+              ruleNode.setOperator('is_wildcard');
             }
             ruleNode.setValue(input);
             ruleNode.setOffset(qtree.children[0].start);
             ruleNode.setEnd(qtree.children[0].end);
-            ruleNode.setOperator('is_wildcard');
             break;
           case 'QRANGEEX':
           case 'QRANGEIN':
           case 'QANYTHING':
+            ruleNode.setOperator('is_not_empty');
+            break;
           case 'QDATE':
           case 'QPOSITION':
           case 'QFUNC':
@@ -457,38 +464,31 @@ define(['underscore',
         var val, q, field;
         if (rule.type == 'string') {
           var input = rule.value.trim();
+
+          field = rule.field || '__all__';
+
           switch(rule.operator) {
 
             case 'is_phrase':
             case 'is_not_phrase':
-              field = rule.field;
+            case 'contains_phrase':
+            case 'contains_not_phrase':
+
               val = this.apiQueryUpdater.quote(input);
-              if (field) {
-                q = field + ':' + val;
-              }
-              else {
-                q = val;
-              }
+              q = field + ':' + val;
               if (rule.operator.indexOf('_not') > -1)
                 q = '-' + q;
               break;
 
             case 'is':
             case 'is_not':
-              field = rule.field;
               val = this.apiQueryUpdater.quoteIfNecessary(input);
-              if (field) {
-                q = field + ':' + val;
-              }
-              else {
-                q = val;
-              }
+              q = field + ':' + val;
               if (rule.operator.indexOf('_not') > -1)
                 q = '-' + q;
               break;
             case 'contains':
             case 'contains_not':
-              field = rule.field;
               if (input.indexOf(' ') > -1) {
                 val = this.apiQueryUpdater.quoteIfNecessary(input, '(', ')');
               }
@@ -496,26 +496,23 @@ define(['underscore',
                 val = this.apiQueryUpdater.quoteIfNecessary(input, '"', '"');
               }
 
-              if (field) {
-                q = field + ':' + val;
-              }
-              else {
-                q = val;
-              }
+              q = field + ':' + val;
               if (rule.operator.indexOf('_not') > -1)
                 q = '-' + q;
               break;
+
             case 'is_exactly':
             case 'is_not_exactly':
-              field = rule.field || '__all__';
               q = '=' + field + ':' + this.apiQueryUpdater.quoteIfNecessary(input);
               if (rule.operator.indexOf('_not_') > -1)
                 q = 'NOT ' + q;
               break;
+
             case 'is_wildcard':
             case 'is_not_wildcard':
-              field = rule.field || '__all__';
-              if (input.indexOf('*') > -1) { // user input contains '*' - they should know what they do
+            case 'starts_with':
+            case 'starts_not_with':
+              if (input.indexOf('*') > -1 || input.indexOf('?') > -1) { // user input contains '*' - they should know what they do
                 input = this.apiQueryUpdater.quoteIfNecessary(input);
               }
               else {
@@ -534,6 +531,38 @@ define(['underscore',
               break;
 
 
+            case 'regex':
+              if (field == '__all__') {
+                q = 'regex(all,'  + input + ')';
+              }
+              else {
+                q = 'regex(' + field + ', ' + input + ')';
+              }
+              break;
+
+            case 'is_not_empty':
+              if (field == '__all__') {
+                q = '*:*';
+              }
+              else {
+                q = field + ':?';
+              }
+              break;
+
+            case 'is_function':
+            case 'is_not_function':
+              switch(field) {
+                case 'topn()':
+                  q = 'topn(' + input.split('|').join(', ') + ')';
+                  break;
+                default:
+                  throw 'unknown function' + field;
+              }
+
+              if (rule.operator.indexOf('_not_') > -1)
+                q = '-' + q;
+
+              break;
             default:
               throw new Error('Unknown operator: ' + rule.operator);
           }

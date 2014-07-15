@@ -58,7 +58,7 @@ define(['jquery',
             {"id": "__all__", "field": "__all__", "type": "string", "operator": "is", "value": "foo"}
           ]};
 
-          expect(rules.toJSON()).to.be.eql(expected);
+          expect(rules).to.be.eql(expected);
           expect(p.getQuery(rules)).to.be.eql("foo");
 
           done();
@@ -124,7 +124,7 @@ define(['jquery',
             ]}
           ]};
 
-          expect(rules.toJSON()).to.be.eql(expected);
+          expect(rules).to.be.eql(expected);
           expect(p.getQuery(rules)).to.be.eql("title:foo AND (bar OR bla)");
 
           done();
@@ -180,7 +180,7 @@ define(['jquery',
             {"id": "title", "field": "title", "type": "string", "operator": "contains", "value": "foo bar"}
           ]};
 
-          expect(rules.toJSON()).to.be.eql(expected);
+          expect(rules).to.be.eql(expected);
           expect(p.getQuery(rules)).to.be.eql("title:(foo bar)");
 
           done();

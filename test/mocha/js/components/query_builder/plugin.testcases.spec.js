@@ -80,14 +80,23 @@ define(['underscore',
         done();
       });
 
-      // TODO: I must deploy updated qtree version
-      it("\"phrase\"", function (done) {
-        testQ('"foo"', '"foo"');
+      it("\"phrase foo\"", function (done) {
+        testQ('"phrase foo"', '"phrase foo"');
         done();
       });
 
       it("foo*", function (done) {
         testQ('foo*', 'foo*');
+        done();
+      });
+
+      it("f?oo", function (done) {
+        testQ('f?oo', 'f?oo');
+        done();
+      });
+
+      it("foo*bar", function (done) {
+        testQ('foo*bar', 'foo*bar');
         done();
       });
 
@@ -103,6 +112,11 @@ define(['underscore',
 
       it("title:foo", function (done) {
         testQ('title:foo', 'title:foo');
+        done();
+      });
+
+      it("title:(foo bar)", function (done) {
+        testQ('title:(foo bar)', 'title:(foo bar)');
         done();
       });
 
@@ -123,6 +137,10 @@ define(['underscore',
         testQ('(x or y)', 'x OR y');
         testQ('((x OR y))', '(x OR y)');
         done();
+      });
+
+      it("(x AND (y AND z)", function() {
+        testQ('(x AND (y AND z)', '(x AND (y AND z)');
       });
 
       it("all supported indexes", function (done) {

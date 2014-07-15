@@ -69,11 +69,11 @@ define([
             "operator_is_not_phrase": "excludes phrase",
             "operator_is_not_empty": "is not empty",
 
-            "operator_f_pos": "Limit by Position",
-            "operator_f_citations": "Get Citations",
-            "operator_f_references": "Get References",
-            "operator_f_trending": "Find Trending Papers",
-            "operator_f_instructive": "Find Instructive Papers"
+            "operator_pos()": "Limit by Position",
+            "operator_citations()": "Get Citations",
+            "operator_references()": "Get References",
+            "operator_trending()": "Find Trending Papers",
+            "operator_instructive()": "Find Instructive Papers"
 
           },
           operators: [
@@ -83,12 +83,18 @@ define([
 
             {type: 'contains',         accept_values: true,  apply_to: ['string']},
             {type: 'contains_not',     accept_values: true,  apply_to: ['string']},
+
+            {type: 'is_function',      accept_values: true,  apply_to: ['string']},
+            {type: 'is_not_function',  accept_values: true,  apply_to: ['string']},
+
             {type: 'is_phrase',        accept_values: true,  apply_to: ['string']},
-            {type: 'is_wildphrase',        accept_values: true,  apply_to: ['string']},
+            {type: 'is_wildphrase',    accept_values: true,  apply_to: ['string']},
             {type: 'is_not_phrase',    accept_values: true,  apply_to: ['string']},
 
             {type: 'is_wildcard',      accept_values: true,  apply_to: ['string']},
             {type: 'is_not_wildcard',  accept_values: true,  apply_to: ['string']},
+            {type: 'starts_with',      accept_values: true,  apply_to: ['string']},
+            {type: 'starts_not_with',  accept_values: true,  apply_to: ['string']},
 
             {type: 'is_empty',         accept_values: false, apply_to: ['string']},
             {type: 'is_not_empty',     accept_values: false, apply_to: ['string']},
@@ -99,11 +105,17 @@ define([
             {type: 'greater_or_equal', accept_values: true,  apply_to: ['number', 'datetime']},
 
 
-            {type: 'f_pos',            accept_values: true, apply_to: ['string']},
-            {type: 'f_citations',      accept_values: true, apply_to: ['string']},
-            {type: 'f_references',     accept_values: true, apply_to: ['string']},
-            {type: 'f_trending',       accept_values: true, apply_to: ['string']},
-            {type: 'f_instructive',    accept_values: true, apply_to: ['string']}
+            {type: 'contains',         accept_values: true,  apply_to: ['string']},
+            {type: 'contains_not',     accept_values: true,  apply_to: ['string']},
+            {type: 'contains_phrase',  accept_values: true,  apply_to: ['string']},
+            {type: 'contains_not_phrase', accept_values: true,  apply_to: ['string']},
+            {type: 'is_not_empty',     accept_values: false, apply_to: ['string']},
+
+            {type: 'pos()',            accept_values: true, apply_to: ['string']},
+            {type: 'citations()',      accept_values: true, apply_to: ['string']},
+            {type: 'references()',     accept_values: true, apply_to: ['string']},
+            {type: 'trending()',       accept_values: true, apply_to: ['string']},
+            {type: 'instructive()',    accept_values: true, apply_to: ['string']}
 
           ]
         });
@@ -151,15 +163,15 @@ define([
       ';
               }
             },
-            {id: 'f_citations', label: 'Find Citations()', type: 'string', placeholder: '&lt;any valid query&gt;',
+            {id: 'citations()', label: 'Find Citations()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators},
-            {id: 'f_references', label: 'Find References()', type: 'string', placeholder: '&lt;any valid query&gt;',
+            {id: 'references()', label: 'Find References()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators},
-            {id: 'f_trending', label: 'Find Trending()', type: 'string', placeholder: '&lt;any valid query&gt;',
+            {id: 'trending()', label: 'Find Trending()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators},
-            {id: 'f_instructive', label: 'Find Instructive()', type: 'string', placeholder: '&lt;any valid query&gt;',
+            {id: 'instructive()', label: 'Find Instructive()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators},
-            {id: 'f_topn', label: 'Limit to TopN Results()', type: 'string',
+            {id: 'topn()', label: 'Limit to TopN Results()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
                 var $container = $rule.find('.rule-value-container');
@@ -172,11 +184,11 @@ define([
                     $a = $(args[i]);
                     vals[parseInt($a.attr('index'))] = $a.val();
                   }
-                  $container.find('[name$=_value]').val(vals.join(', '));
+                  $container.find('[name$=_value]').val(vals.join('|'));
                 });
 
                 return '\
-                      <input type="text" name="arg" index="1" placeholder="&lt;any valid query&gt;">\
+                      <input type="text" name="arg" index="1" placeholder="(any valid query)">\
                       <select name="arg" index="2"> \
                         <option value="relevance">Relevance</option> \
                         <option value="citation_count desc">Citations (desc)</option> \
