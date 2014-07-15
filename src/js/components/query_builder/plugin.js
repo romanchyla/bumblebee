@@ -76,7 +76,12 @@ define([
             "operator_citations()": "Get Citations",
             "operator_references()": "Get References",
             "operator_trending()": "Find Trending Papers",
-            "operator_instructive()": "Find Instructive Papers"
+            "operator_instructive()": "Find Instructive Papers",
+
+            delete_rule: ' ',
+            delete_group: '',
+            add_rule: ' ',
+            add_group: ' '
 
           },
           operators: [
@@ -203,7 +208,56 @@ define([
                       <input name="' + $rule.attr('id') + '_value" style="display:none;"></select>';
               }
             }
-          ]
+          ],
+          extend: {
+            getGroupTemplate: function(group_id) {
+
+              var conditions = [];
+              var l = this.settings.conditions.length, cond;
+              for (var i=0; i < l; i++) {
+                cond = this.settings.conditions[i];
+                conditions.push('<label class="btn btn-xs btn-primary ' + (this.settings.default_condition == cond ? 'active' : '') + '"><input type="radio" name="'+ group_id +'_cond" value="' + cond + '"' + (this.settings.default_condition == cond ? 'checked' : '') + '>'+ (this.lang[cond.toLowerCase() + '_condition'] || cond) +'</label>');
+              }
+              conditions = conditions.join('\n');
+
+              var h = '\
+<dl id="'+ group_id +'" class="rules-group-container" '+ (this.settings.sortable ? 'draggable="true"' : '') +'> \
+  <dt class="rules-group-header"> \
+    <div class="btn-group pull-right"> \
+      <button type="button" class="btn btn-xs btn-success" data-add="rule"><i class="glyphicon glyphicon-plus"></i> '+ this.lang.add_rule +'</button> \
+      <button type="button" class="btn btn-xs btn-success" data-add="group"><i class="glyphicon glyphicon-plus-sign"></i> '+ this.lang.add_group +'</button> \
+      <button type="button" class="btn btn-xs btn-danger" data-delete="group"><i class="glyphicon glyphicon-remove"></i> '+ this.lang.delete_group +'</button> \
+    </div> \
+    <div class="btn-group"> \
+      ' + conditions + '\
+    </div> \
+    '+ (this.settings.sortable ? '<div class="drag-handle"><i class="glyphicon glyphicon-sort"></i></div>' : '') +' \
+  </dt> \
+  <dd class=rules-group-body> \
+    <ul class=rules-list></ul> \
+  </dd> \
+</dl>';
+
+              return h;
+            },
+
+            getRuleTemplate: function(rule_id) {
+              var h = '\
+<li id="'+ rule_id +'" class="rule-container" '+ (this.settings.sortable ? 'draggable="true"' : '') +'> \
+  <div class="rule-header"> \
+    <div class="btn-group pull-left"> \
+      <button type="button" class="btn btn-xs btn-danger" data-delete="rule"><i class="glyphicon glyphicon-remove"></i> '+ this.lang.delete_rule +'</button> \
+    </div> \
+  </div> \
+  '+ (this.settings.sortable ? '<div class="drag-handle"><i class="glyphicon glyphicon-sort"></i></div>' : '') +' \
+  <div class="rule-filter-container"></div> \
+  <div class="rule-operator-container"></div> \
+  <div class="rule-value-container"></div> \
+</li>';
+
+              return h;
+            }
+          }
         });
       },
 
