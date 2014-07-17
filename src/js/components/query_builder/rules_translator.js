@@ -46,21 +46,20 @@ define(['underscore',
       return q;
     };
 
-    var validOperators = {'AND': 'AND', 'OR': 'OR', 'DEFOP': 'DEFOP'};
 
     var RuleNode = function() {
-
+      this.validOperators = {'AND': 'AND', 'OR': 'OR', 'DEFOP': 'DEFOP'};
     };
     _.extend(RuleNode.prototype, {
       setCondition: function(val) {
         this.rules = this.rules || [];
         if (!val) {
-          this.condition = validOperators.DEFOP;
+          this.condition = this.validOperators.DEFOP || 'AND';
           return;
         }
-        if (!validOperators.hasOwnProperty(val))
+        if (!this.validOperators.hasOwnProperty(val))
           throw new Error("Unknown operator: " + val);
-        this.condition = validOperators[val];
+        this.condition = this.validOperators[val];
       },
       _serializeValue: function() {
         if (!this.value)
@@ -142,6 +141,13 @@ define(['underscore',
     var RulesTranslator = GenericModule.extend({
       initialize: function(options) {
         this.apiQueryUpdater = new ApiQueryUpdater('rulesTranslator');
+        this.validFunctions = {
+          'topn()': true,
+          'citations()': true,
+          'references()': true,
+          'instructive()': true,
+          'trending()': true
+        };
       },
 
       /**
@@ -359,7 +365,20 @@ define(['underscore',
             ruleNode.setOperator('is_not_empty');
             break;
           case 'QDATE':
+            break;
           case 'QPOSITION':
+            if (qtree.children[0].name == 'AUTHOR_SEARCH') {
+              var input =  qtree.children[0].input.trim();
+              ruleNode.setValue(input.replace('^', ''));
+              ruleNode.setField('^author');
+              ruleNode.setOperator('is');
+            }
+            else {
+              _.each(qtree.children, function(child) {
+                this._extractRule(child, ruleNode);
+              }, this);
+            }
+            break;
           case 'QFUNC':
             var funcName = qtree.children[0].input.replace('(', '()');
             var vals = this.extractFunctionValues(funcName, qtree.children[1]);
@@ -382,8 +401,8 @@ define(['underscore',
                 throw new Error('Eeeek, we can\'t extract function values - bummmmmmer! Sorry boss');
               }
 
-              var offset = qtree.children[0].end;
-              var end = qtree.children[qtree.children.length() - 1].offset;
+              var offset = qtree.children[0].end + 1;
+              var end = qtree.children[qtree.children.length - 1].end;
 
               if (!(offset && end)) {
                 throw new Error('Eeeek, this is a weird query tree, i don\'t know how to parse it');
@@ -391,6 +410,7 @@ define(['underscore',
 
               ruleNode.setValue(qtree.children[0].input + originalQuery.substring(offset, end) + ')');
               ruleNode.setField('black_hole');
+              ruleNode.setOperator('is_literal');
             }
             break;
           case 'QDELIMITER':
@@ -603,13 +623,19 @@ define(['underscore',
                   q = 'topn(' + input.split('|').join(', ') + ')';
                   break;
                 default:
-                  throw 'unknown function' + field;
+                  q = field.replace('()', '(') + input.split('|').join(', ') + ')';
+                  //throw 'unknown function' + field;
               }
 
               if (rule.operator.indexOf('_not_') > -1)
                 q = '-' + q;
 
               break;
+
+            case 'is_literal':
+              q = input;
+              break;
+
             default:
               throw new Error('Unknown operator: ' + rule.operator);
           }
@@ -623,6 +649,9 @@ define(['underscore',
 
       extractFunctionValues: function(funcname, qtree) {
 
+        if (!this.validFunctions[funcname])
+          return null;
+
         var vals = [];
         _.each(qtree.children, function(child) {
           var childNode = new RuleNode();
@@ -631,15 +660,15 @@ define(['underscore',
           // detect more complicated case of the nested queries and bail
           // out; we dont want to handle nested structures, if we give up
           // the parent will simply extract the input inbetween brackets
-          if (childNode.children && childNode.children.length() > 0) {
-            return null;
-          }
+          //if (childNode.rules && childNode.rules.length() > 1) {
+          //  return null;
+          //}
 
-          if (!childNode.value) {
+          if (!(childNode.value || childNode.rules)) { // commas?
             return;
           }
 
-          console.log(JSON.stringify(childNode));
+          //console.log(JSON.stringify(childNode));
           vals.push(this.buildQuery(childNode));
         }, this);
         return vals;
@@ -654,7 +683,18 @@ define(['underscore',
           return t.originalQuery;
         }
         return '';
+      },
+
+      addValidFunctions: function(fs) {
+        this.validFunctions = _.extend(this.validFunctions, fs);
+      },
+      setValidFunctions: function(vals) {
+        this.validFunctions = vals;
+      },
+      getValidFunctions: function() {
+        return this.validFunctions;
       }
+
 
     });
 

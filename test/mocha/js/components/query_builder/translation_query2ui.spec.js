@@ -261,7 +261,7 @@ define(['jquery',
 
           var expected =
           {"rules": [
-            {"id": "topn()", "field": "topn()", "type": "string", "operator": "contains", "value": "title:\"star\"|1|2"}
+            {"id": "topn()", "field": "topn()", "type": "string", "operator": "is_function", "value": "title:\"star\"|1|2"}
           ]};
 
           expect(rules).to.be.eql(expected);
@@ -271,6 +271,136 @@ define(['jquery',
         });
 
       });
+
+      it("citations(references(instructive(foo)))", function (done) {
+        var p = new QueryBuilderPlugin(
+          {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
+
+
+        expectedQTree = {"name": "OPERATOR", "label": "DEFOP", "children": [
+          {"name": "CLAUSE", "label": "CLAUSE", "children": [
+            {"name": "MODIFIER", "label": "MODIFIER", "children": [
+              {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                {"name": "QFUNC", "label": "QFUNC", "children": [
+                  {"name": "FUNC_NAME", "input": "citations(", "start": 0, "end": 9},
+                  {"name": "OPERATOR", "label": "DEFOP", "children": [
+                    {"name": "CLAUSE", "label": "CLAUSE", "children": [
+                      {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                        {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                          {"name": "QFUNC", "label": "QFUNC", "children": [
+                            {"name": "FUNC_NAME", "input": "references(", "start": 10, "end": 20},
+                            {"name": "OPERATOR", "label": "DEFOP", "children": [
+                              {"name": "CLAUSE", "label": "CLAUSE", "children": [
+                                {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                                  {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                                    {"name": "QFUNC", "label": "QFUNC", "children": [
+                                      {"name": "FUNC_NAME", "input": "instructive(", "start": 21, "end": 32},
+                                      {"name": "OPERATOR", "label": "DEFOP", "children": [
+                                        {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                                          {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                                            {"name": "FIELD", "label": "FIELD", "children": [
+                                              {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                                                {"name": "TERM_NORMAL", "input": "foo", "start": 33, "end": 35}
+                                              ] }
+                                            ] }
+                                          ] }
+                                        ] }
+                                      ] },
+                                      {"name": "RPAREN", "input": ")", "start": 36, "end": 36}
+                                    ] }
+                                  ] }
+                                ] }
+                              ] }
+                            ] },
+                            {"name": "RPAREN", "input": ")", "start": 37, "end": 37}
+                          ] }
+                        ] }
+                      ] }
+                    ] }
+                  ] },
+                  {"name": "RPAREN", "input": ")", "start": 38, "end": 38}
+                ] }
+              ] }
+            ] }
+          ] }
+        ] };
+
+        var promise = p.updateQueryBuilder("citations(references(instructive(foo)))");
+
+        promise.done(function (qtree) {
+          var rules = p.getRulesFromQTree(qtree);
+
+          var expected =
+          {"rules": [
+            {"id": "citations()", "field": "citations()", "type": "string", "operator": "is_function", "value": "references(instructive(foo))"}
+          ]};
+
+          expect(rules).to.be.eql(expected);
+          expect(p.getQuery(rules)).to.be.eql("citations(references(instructive(foo)))");
+
+          done();
+        });
+
+      });
+
+      it("catataons(foo OR bar)", function (done) {
+        var p = new QueryBuilderPlugin(
+          {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
+
+
+        expectedQTree = {"name": "OPERATOR", "label": "DEFOP", "children": [
+          {"name": "CLAUSE", "label": "CLAUSE", "children": [
+            {"name": "MODIFIER", "label": "MODIFIER", "children": [
+              {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                {"name": "QFUNC", "label": "QFUNC", "children": [
+                  {"name": "FUNC_NAME", "input": "catataons(", "start": 0, "end": 9},
+                  {"name": "OPERATOR", "label": "DEFOP", "children": [
+                    {"name": "OPERATOR", "label": "OR", "children": [
+                      {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                        {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                          {"name": "FIELD", "label": "FIELD", "children": [
+                            {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                              {"name": "TERM_NORMAL", "input": "foo", "start": 10, "end": 12}
+                            ] }
+                          ] }
+                        ] }
+                      ] },
+                      {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                        {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                          {"name": "FIELD", "label": "FIELD", "children": [
+                            {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                              {"name": "TERM_NORMAL", "input": "bar", "start": 17, "end": 19}
+                            ] }
+                          ] }
+                        ] }
+                      ] }
+                    ] }
+                  ] },
+                  {"name": "RPAREN", "input": ")", "start": 20, "end": 20}
+                ] }
+              ] }
+            ] }
+          ] }
+        ] };
+
+        var promise = p.updateQueryBuilder("catataons(foo OR bar)");
+
+        promise.done(function (qtree) {
+          var rules = p.getRulesFromQTree(qtree);
+
+          var expected =
+          {"rules": [
+            {"id": "black_hole", "field": "black_hole", "type": "string", "operator": "is_literal", "value": "catataons(foo OR bar)"}
+          ]};
+
+          expect(rules).to.be.eql(expected);
+          expect(p.getQuery(rules)).to.be.eql("catataons(foo OR bar)");
+
+          done();
+        });
+
+      });
+
     }
   );
 });

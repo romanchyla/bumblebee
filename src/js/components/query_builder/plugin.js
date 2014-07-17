@@ -36,6 +36,17 @@ define([
         this._rules = null;
         this.rulesTranslator = new RulesTranslator();
 
+        this.rulesTranslator.setValidFunctions(
+          {
+            'topn()': true,
+            'citations()': true,
+            'references()': true,
+            'instructive()': true,
+            'trending()': true,
+            'pos()': true
+          }
+        );
+
         this.qtreeGetter = options.qtreeGetter || null;
         if (this.qtreeGetter && !this.qtreeGetter.getQTree) {
           throw new Error("qtreeGetter must provide method 'getQTree'");
@@ -92,6 +103,7 @@ define([
             {type: 'contains',         accept_values: true,  apply_to: ['string']},
             {type: 'contains_not',     accept_values: true,  apply_to: ['string']},
 
+            {type: 'is_literal',       accept_values: true,  apply_to: ['string']},
             {type: 'is_function',      accept_values: true,  apply_to: ['string']},
             {type: 'is_not_function',  accept_values: true,  apply_to: ['string']},
 
@@ -225,7 +237,7 @@ define([
                 ]);
               }
             },
-            {id: 'black_hole', label: 'Black Hole Field', type: 'string',
+            {id: 'black_hole', label: 'literal', type: 'string',
               operators: functionOperators, createOperatorIfNecessary: true
             }
           ],
