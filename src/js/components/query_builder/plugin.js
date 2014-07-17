@@ -155,61 +155,102 @@ define([
               operators: singleTokenOperators, createOperatorIfNecessary: true},
             {id: 'full', label: 'Fulltext', type: 'string',
               operators: multiTokenOperators, createOperatorIfNecessary: true},
-            {id: 'function', label: 'Function', type: 'string',
-              operators: functionOperators, createOperatorIfNecessary: true},
             {id: 'pos()', label: 'Match by Position()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
-                var $container = $rule.find('.rule-value-container');
-
-
-
-                return '\
-      <input type="text" name="xxx" placeholder="author:&quot;Feynman, R&quot;">\
-      start: <input type="text" name="xxx" size="3" placeholder="1">\
-      end (optional): <input type="text" name="xxx" size="3" placeholder="2">\
-      ';
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'author:&quot;higgs, p&quot;'},
+                  {id: 'start', label: 'start', type: 'number', placeholder: '1'},
+                  {id: 'end', label: 'end', type: 'number', placeholder: '1 (optional)'}
+                ]);
               }
             },
-            {id: 'citations()', label: 'Find Citations()', type: 'string', placeholder: '(any valid query)',
-              operators: functionOperators},
-            {id: 'references()', label: 'Find References()', type: 'string', placeholder: '(any valid query)',
-              operators: functionOperators},
+            {id: 'citations()', label: 'Find Citations()', type: 'string', placeholder: 'author:&quot;Einstein, A&quot;',
+              operators: functionOperators,
+              input: function($rule, filter) {
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'author:einstein year:1905'}
+                ]);
+              }
+            },
+            {id: 'references()', label: 'Find References()', type: 'string', placeholder: 'instructive(title:&quot;monte carlo&quot;)',
+              operators: functionOperators,
+              input: function($rule, filter) {
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'title:&quot;Relativistic Brownian motion&quot;'}
+                ]);
+              }
+            },
             {id: 'trending()', label: 'Find Trending()', type: 'string', placeholder: '(any valid query)',
-              operators: functionOperators},
+              operators: functionOperators,
+              input: function($rule, filter) {
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'higgs boson'}
+                ]);
+              }
+            },
             {id: 'instructive()', label: 'Find Instructive()', type: 'string', placeholder: '(any valid query)',
-              operators: functionOperators},
+              operators: functionOperators,
+              input: function($rule, filter) {
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'monte carlo'}
+                ]);
+              }
+            },
             {id: 'topn()', label: 'Limit to TopN Results()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
-                var $container = $rule.find('.rule-value-container');
-
-                $container.on('change blur', '[name=arg]', function(){
-                  var h = '';
-                  var args = $container.find('[name=arg]');
-                  var vals = new Array(args.length), $a;
-                  for (var i= 0,l=args.length; i<l; i++) {
-                    $a = $(args[i]);
-                    vals[parseInt($a.attr('index'))] = $a.val();
+                return this.createFunctionInputs([
+                  {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden'},
+                  {id: 'number', label: 'number', type: 'number', placeholder: '100'},
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'citations(author:&quot;von neumann, john&quot;)'},
+                  {
+                    id: 'sorting',
+                    label: 'sorting',
+                    type: 'string',
+                    input: 'select',
+                    values: {
+                      'relevance': 'Pick first x most relevant',
+                      'citation_count desc': 'Pick first x most cited',
+                      'citation_count asc': 'Pick first x least cited',
+                      'pubdate desc': 'Pick first x newest',
+                      'pubdate asc': 'Pick first x oldest'
+                    }
                   }
-                  $container.find('[name$=_value]').val(vals.join('|'));
-                });
-
-                return '\
-                      <input type="text" name="arg" index="1" placeholder="(any valid query)">\
-                      <select name="arg" index="2"> \
-                        <option value="relevance">Relevance</option> \
-                        <option value="citation_count desc">Citations (desc)</option> \
-                        <option value="citation_count desc">Citations (asc)</option> \
-                        <option value="pubdate desc">Date (desc)</option> \
-                        <option value="pubdate desc">Date (asc)</option> \
-                      </select> \
-                      <input type="text" name="arg" index="0" size="3" placeholder="100">\
-                      <input name="' + $rule.attr('id') + '_value" style="display:none;"></select>';
+                ]);
               }
+            },
+            {id: 'black_hole', label: 'Black Hole Field', type: 'string',
+              operators: functionOperators, createOperatorIfNecessary: true
             }
           ],
           extend: {
+            createFunctionInputs: function(profiles) {
+              var $target, values, $current, $container;
+              $container = $('<span/>');
+              var $target = $(this.getRuleInput(profiles[0].id, profiles[0]));
+              $target.addClass('hide');
+              values = [];
+
+              for (var i=1; i<profiles.length; i++) {
+                $current = $(this.getRuleInput(profiles[i].id, profiles[i]));
+                $current.attr('index', i-1);
+                $current.change(function() {
+                  values[parseInt($(this).attr('index')) || '0'] = $(this).val();
+                  $target.val(values.join('|'));
+                });
+                $container.append($current);
+                values.push('');
+              }
+              $container.append($target);
+              return $container;
+            },
+
             getGroupTemplate: function(group_id) {
 
               var conditions = [];
@@ -357,6 +398,9 @@ define([
         var self = this;
         //first parse the query string into qtree
         return this.qtreeGetter.getQTree(query).done(function(qtree) {
+          // insert the original query string
+          qtree.originalQuery = query;
+
           //translate qtree into 'rules'
           var rules = self.getRulesFromQTree(qtree);
           // and update the UI builder with them

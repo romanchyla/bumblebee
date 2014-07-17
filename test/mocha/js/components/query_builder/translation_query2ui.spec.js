@@ -187,6 +187,90 @@ define(['jquery',
         });
 
       });
+
+      it("topn(title:\"star\",1,2)", function (done) {
+        var p = new QueryBuilderPlugin(
+          {qtreeGetter: QueryBuilderPlugin.buildQTreeGetter(minsub.beehive.getHardenedInstance())});
+
+
+        expectedQTree = {"name": "OPERATOR", "label": "DEFOP", "children": [
+          {"name": "CLAUSE", "label": "CLAUSE", "children": [
+            {"name": "MODIFIER", "label": "MODIFIER", "children": [
+              {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                {"name": "QFUNC", "label": "QFUNC", "children": [
+                  {"name": "FUNC_NAME", "input": "topn(", "start": 0, "end": 4},
+                  {"name": "OPERATOR", "label": "DEFOP", "children": [
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "TERM_NORMAL", "input": "title", "start": 5, "end": 9},
+                          {"name": "QPHRASE", "label": "QPHRASE", "children": [
+                            {"name": "PHRASE", "input": "\"star\"", "start": 11, "end": 16}
+                          ] }
+                        ] }
+                      ] }
+                    ] },
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QDELIMITER", "label": "QDELIMITER", "children": [
+                            {"name": "COMMA", "input": ",", "start": 17, "end": 17}
+                          ] }
+                        ] }
+                      ] }
+                    ] },
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                            {"name": "NUMBER", "input": "1", "start": 18, "end": 18}
+                          ] }
+                        ] }
+                      ] }
+                    ] },
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QDELIMITER", "label": "QDELIMITER", "children": [
+                            {"name": "COMMA", "input": ",", "start": 19, "end": 19}
+                          ] }
+                        ] }
+                      ] }
+                    ] },
+                    {"name": "MODIFIER", "label": "MODIFIER", "children": [
+                      {"name": "TMODIFIER", "label": "TMODIFIER", "children": [
+                        {"name": "FIELD", "label": "FIELD", "children": [
+                          {"name": "QNORMAL", "label": "QNORMAL", "children": [
+                            {"name": "NUMBER", "input": "2", "start": 20, "end": 20}
+                          ] }
+                        ] }
+                      ] }
+                    ] }
+                  ] },
+                  {"name": "RPAREN", "input": ")", "start": 21, "end": 21}
+                ] }
+              ] }
+            ] }
+          ] }
+        ] };
+
+        var promise = p.updateQueryBuilder("topn(title:\"star\",1,2)");
+
+        promise.done(function (qtree) {
+          var rules = p.getRulesFromQTree(qtree);
+
+          var expected =
+          {"rules": [
+            {"id": "topn()", "field": "topn()", "type": "string", "operator": "contains", "value": "title:\"star\"|1|2"}
+          ]};
+
+          expect(rules).to.be.eql(expected);
+          expect(p.getQuery(rules)).to.be.eql("topn(title:\"star\", 1, 2)");
+
+          done();
+        });
+
+      });
     }
   );
 });

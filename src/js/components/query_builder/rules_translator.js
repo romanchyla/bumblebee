@@ -120,6 +120,9 @@ define(['underscore',
       setModifier: function(m) {
         this.modifier = m;
       },
+      getModifier: function() {
+        return this.modifier;
+      },
       setFuzzy: function(f) {
         this.fuzzy = f.replace('~', '');
       },
@@ -294,7 +297,7 @@ define(['underscore',
             break;
           case 'MODIFIER':
             if (qtree.children.length == 2)
-              ruleNode.setModifier(qtree.children[0].label);
+              ruleNode.setModifier(qtree.children[0].name);
             this._extractRule(qtree.children[qtree.children.length-1], ruleNode);
             break;
           case 'TMODIFIER':
@@ -357,7 +360,22 @@ define(['underscore',
           case 'QDATE':
           case 'QPOSITION':
           case 'QFUNC':
+            var funcName = qtree.children[0].input.replace('(', '()');
+            var vals = this.extractFunctionValues(funcName, qtree.children[1]);
+            if (vals) {
+              ruleNode.setValue(vals.join('|'));
+              ruleNode.setField(funcName);
+              if (ruleNode.getModifier() == 'MINUS') {
+                ruleNode.setOperator('is_not_function');
+              }
+              else {
+                ruleNode.setOperator('is_function');
+              }
+            }
+            break;
           case 'QDELIMITER':
+            // ignore
+            break;
           case 'QIDENTIFIER':
           case 'QCOORDINATE':
           case 'QREGEX':
