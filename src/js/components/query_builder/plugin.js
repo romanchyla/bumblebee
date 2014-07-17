@@ -155,18 +155,18 @@ define([
               operators: singleTokenOperators, createOperatorIfNecessary: true},
             {id: 'full', label: 'Fulltext', type: 'string',
               operators: multiTokenOperators, createOperatorIfNecessary: true},
-            {id: 'pos()', label: 'Match by Position()', type: 'string',
+            {id: 'pos()', label: 'Search by Position()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
                   {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
                   {id: 'query', label: 'query', type: 'text', placeholder: 'author:&quot;higgs, p&quot;'},
-                  {id: 'start', label: 'start', type: 'number', placeholder: '1'},
-                  {id: 'end', label: 'end', type: 'number', placeholder: '1 (optional)'}
+                  {id: 'start', label: 'start', type: 'number', placeholder: '1 (start)'},
+                  {id: 'end', label: 'end', type: 'number', placeholder: '2 (end:optional)'}
                 ]);
               }
             },
-            {id: 'citations()', label: 'Find Citations()', type: 'string', placeholder: 'author:&quot;Einstein, A&quot;',
+            {id: 'citations()', label: 'citations()', type: 'string', placeholder: 'author:&quot;Einstein, A&quot;',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
@@ -175,16 +175,16 @@ define([
                 ]);
               }
             },
-            {id: 'references()', label: 'Find References()', type: 'string', placeholder: 'instructive(title:&quot;monte carlo&quot;)',
+            {id: 'references()', label: 'references()', type: 'string', placeholder: 'instructive(title:&quot;monte carlo&quot;)',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
                   {id: $rule.attr('id'), label: 'function', type: 'text', placeholder: 'hidden target'},
-                  {id: 'query', label: 'query', type: 'text', placeholder: 'title:&quot;Relativistic Brownian motion&quot;'}
+                  {id: 'query', label: 'query', type: 'text', placeholder: 'title:&quot;brownian motion&quot;'}
                 ]);
               }
             },
-            {id: 'trending()', label: 'Find Trending()', type: 'string', placeholder: '(any valid query)',
+            {id: 'trending()', label: 'trending()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
@@ -193,7 +193,7 @@ define([
                 ]);
               }
             },
-            {id: 'instructive()', label: 'Find Instructive()', type: 'string', placeholder: '(any valid query)',
+            {id: 'instructive()', label: 'instructive()', type: 'string', placeholder: '(any valid query)',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
@@ -202,7 +202,7 @@ define([
                 ]);
               }
             },
-            {id: 'topn()', label: 'Limit to TopN Results()', type: 'string',
+            {id: 'topn()', label: 'topn()', type: 'string',
               operators: functionOperators,
               input: function($rule, filter) {
                 return this.createFunctionInputs([
@@ -215,11 +215,11 @@ define([
                     type: 'string',
                     input: 'select',
                     values: {
-                      'relevance': 'Pick first x most relevant',
-                      'citation_count desc': 'Pick first x most cited',
-                      'citation_count asc': 'Pick first x least cited',
-                      'pubdate desc': 'Pick first x newest',
-                      'pubdate asc': 'Pick first x oldest'
+                      'citation_count desc': 'Pick first n most cited',
+                      'citation_count asc': 'Pick first n least cited',
+                      'pubdate desc': 'Pick first n newest',
+                      'pubdate asc': 'Pick first n oldest',
+                      'relevance': 'Pick first n most relevant'
                     }
                   }
                 ]);

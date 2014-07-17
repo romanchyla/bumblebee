@@ -263,6 +263,11 @@ define(['underscore',
               }, this);
               break;
             }
+            else {
+              _.each(childr.children, function(child) {
+                this._extractRule(child, ruleNode);
+              }, this);
+            }
 
             break;
 
@@ -590,6 +595,14 @@ define(['underscore',
         else {
           throw new Error("Not knowing what to do with: " + JSON.stringify(rule));
         }
+      },
+
+      extractFunctionValues: function(funcname, qtree) {
+
+        _.each(qtree.children, function(child) {
+          var childNode = new RuleNode();
+          this._extractRule(child, childNode);
+        }, this);
       }
 
     });
