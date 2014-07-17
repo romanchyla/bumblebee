@@ -185,7 +185,7 @@ define(['underscore',
         if (!qtree)
           throw new Error("Empty qtree");
 
-        this._parentize(qtree, qtree);
+        this._parentize(qtree);
 
         var root = this._extractRules(qtree);
 
@@ -210,12 +210,8 @@ define(['underscore',
       _parentize: function(qtree, parent) {
         var self = this;
         qtree.parent = parent;
-        _.each(qtree, function(node) {
-          if (node.children) {
-            _.each(node.children), function(n) {
-              self._parentize(node);
-            };
-          }
+        _.each(qtree.children, function(node) {
+          self._parentize(node, qtree);
         })
       },
 
@@ -377,6 +373,25 @@ define(['underscore',
                 ruleNode.setOperator('is_function');
               }
             }
+            else {
+
+              // in the more complex case we will simply extract the string by position
+
+              var originalQuery = this._getOriginalQuery(qtree);
+              if (!originalQuery) {
+                throw new Error('Eeeek, we can\'t extract function values - bummmmmmer! Sorry boss');
+              }
+
+              var offset = qtree.children[0].end;
+              var end = qtree.children[qtree.children.length() - 1].offset;
+
+              if (!(offset && end)) {
+                throw new Error('Eeeek, this is a weird query tree, i don\'t know how to parse it');
+              }
+
+              ruleNode.setValue(qtree.children[0].input + originalQuery.substring(offset, end) + ')');
+              ruleNode.setField('black_hole');
+            }
             break;
           case 'QDELIMITER':
             // ignore
@@ -456,8 +471,17 @@ define(['underscore',
             return tree.toString().split(' DEFOP ').join(' ').split('__all__:').join('');
 
           }
-          return '';
         }
+        else {
+          var root = new TreeNode('DEFOP');
+          var tree = this._buildQueryTree(root, [rules]);
+          if (tree) {
+            // final modifications (removing some of the unnecessary details)
+            return tree.toString().split(' DEFOP ').join(' ').split('__all__:').join('');
+          }
+        }
+
+        return null;
       },
 
       _buildQueryTree: function (treeNode, rules) {
@@ -599,10 +623,37 @@ define(['underscore',
 
       extractFunctionValues: function(funcname, qtree) {
 
+        var vals = [];
         _.each(qtree.children, function(child) {
           var childNode = new RuleNode();
           this._extractRule(child, childNode);
+
+          // detect more complicated case of the nested queries and bail
+          // out; we dont want to handle nested structures, if we give up
+          // the parent will simply extract the input inbetween brackets
+          if (childNode.children && childNode.children.length() > 0) {
+            return null;
+          }
+
+          if (!childNode.value) {
+            return;
+          }
+
+          console.log(JSON.stringify(childNode));
+          vals.push(this.buildQuery(childNode));
         }, this);
+        return vals;
+      },
+
+      _getOriginalQuery: function(qtree) {
+        var t = qtree;
+        while (t.parent) {
+          t = t.parent;
+        }
+        if (t.originalQuery) {
+          return t.originalQuery;
+        }
+        return '';
       }
 
     });
