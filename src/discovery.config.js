@@ -11,17 +11,27 @@ require.config({
   // Configuration we want to make available to modules of ths application
   // see: http://requirejs.org/docs/api.html#config-moduleconfig
   config: {
+    'js/page_managers/controller': {
+      'LandingPageManager': {
+
+      }
+    },
     'js/apps/discovery/main': {
       core: {
         services: {
           'Api': 'js/services/api',
-          'PubSub': 'js/services/pubsub'
+          'PubSub': 'js/services/pubsub',
+          'Navigator': 'js/apps/discovery/nagivator'
         },
         objects: {
           User: 'js/components/user',
           DynamicConfig: 'discovery.vars',
           QueryMediator: 'js/components/query_mediator',
-          HistoryManager: 'js/components/history_manager'
+          HistoryManager: 'js/components/history_manager',
+          LandingPageManager: 'js/page_managers/landing_page_controller',
+          ResultsPageManager: 'js/page_managers/landing_page_controller',
+          DocumentPageManager: 'js/page_managers/landing_page_controller'
+
         },
         modules: {
           FacetFactory: 'js/widgets/facet/factory'
@@ -42,6 +52,7 @@ require.config({
         Resources : 'js/widgets/resources/widget',
         Export  : 'js/widgets/export/widget',
         Sort : 'js/widgets/sort/widget'
+
       },
       plugins: {
       }

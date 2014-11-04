@@ -1,5 +1,8 @@
 /**
  * Created by rchyla on 3/16/14.
+ *
+ * Beehive is where all the communication happens ('Application' object
+ * is where setup happens; application will load beehive)
  */
 
 define(['backbone', 'underscore',

@@ -38,9 +38,7 @@ define(["config", 'module'], function(config, module) {
         // set some important urls, parameters before doing anything
         app.configure();
 
-        var bootPromise = app.bootstrap();
-
-        bootPromise.done(function (data) {
+        app.bootstrap().done(function (data) {
 
           // set the API key
           if (data.access_token) {
@@ -50,7 +48,18 @@ define(["config", 'module'], function(config, module) {
             api.expires_in = data.expires_in;
           }
 
+
+          var navigator = app.getBeeHive().Services.get('Navigator');
+          if (!navigator) {
+            throw new Exception("Ooops! Who configured this #@$%! There is no Navigator service!")
+          }
+
+          navigator.start(app);
+
           app.start(Router);
+
+
+
         }).fail(function () {
           app.redirect('/505.html');
         });

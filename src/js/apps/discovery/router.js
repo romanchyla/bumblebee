@@ -20,31 +20,6 @@ define([
         if (!this.pubsub) {
           throw new Exception("Ooops! Who configured this #@$%! There is no PubSub service!")
         }
-
-        this.pubSubKey = this.pubsub.getPubSubKey();
-
-        var navigator = this.getBeeHive().Services.get('Navigator');
-        if (!navigator) {
-          throw new Exception("Ooops! Who configured this #@$%! There is no Navigator service!")
-        }
-
-        /**
-         * These 'transitions' could be defined in a separate class; for the moment let's keep
-         * them inside 'router'...
-         */
-
-        navigator.set('index-page', function() { navigator.getComponent('LandingPageManager').show()});
-        navigator.set('results-page', function() { navigator.getComponent('ResultsPageManager').show('search')});
-        navigator.set('abstract-page', function() { navigator.getComponent('AbstractPageManager').show('default')});
-        navigator.set('abstract-page:abstract', function() { navigator.getComponent('AbstractPageManager').show('abstract')});
-        navigator.set('abstract-page:citations', function() { navigator.getComponent('AbstractPageManager').show('citations')});
-        navigator.set('abstract-page:references', function() { navigator.getComponent('AbstractPageManager').show('references')});
-        navigator.set('abstract-page:coreads', function() { navigator.getComponent('AbstractPageManager').show('coreads')});
-        navigator.set('abstract-page:toc', function() { navigator.getComponent('AbstractPageManager').show('toc')});
-        navigator.set('abstract-page:similar', function() { navigator.getComponent('AbstractPageManager').show('similar')});
-        navigator.set('abstract-page:bibtex', function() { navigator.getComponent('AbstractPageManager').show('bibtex')});
-        navigator.set('abstract-page:endnote', function() { navigator.getComponent('AbstractPageManager').show('endnote')});
-        navigator.set('abstract-page:metrics', function() { navigator.getComponent('AbstractPageManager').show('metrics')});
       },
 
 
@@ -57,7 +32,7 @@ define([
 
 
       index: function () {
-        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'index-page');
+        this.pubsub.publish(this.pubsub.NAVIGATE, 'index-page');
       },
 
       search: function (query) {
@@ -65,20 +40,20 @@ define([
           var q= new ApiQuery().load(query);
           this.pubsub.publish(this.pubSubKey, this.pubsub.START_SEARCH, q);
         }
-        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'results-page');
+        this.pubsub.publish(this.pubsub.NAVIGATE, 'results-page');
       },
 
       view: function (bibcode, subPage) {
         if (bibcode){
           if (!subPage) {
-            return this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'abstract-page', bibcode);
+            return this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page', bibcode);
           }
           else {
-            return this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'abstract-page:' + subPage, bibcode);
+            return this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page:' + subPage, bibcode);
           }
 
         }
-        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'results-page');
+        this.pubsub.publish(this.pubsub.NAVIGATE, 'results-page');
       },
 
       noPageFound : function() {

@@ -102,7 +102,7 @@ define(['underscore',
           if (arguments[1] instanceof Transition) {
             return this.catalog.add(arguments[1]);
           }
-          throw new Exception('You must kiddin sir!');
+          throw new Exception('You must be kiddin\' sir!');
         }
         else if (arguments.length == 2) {
           var endpoint = arguments[0];
@@ -124,7 +124,9 @@ define(['underscore',
 
       get: function(endpoint) {
         return this.catalog.get(endpoint);
-      }
+      },
+
+
 
 
     });
