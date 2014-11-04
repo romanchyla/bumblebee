@@ -101,7 +101,7 @@ define([
       args.path = path;
 
       //first, navigate to proper URL
-      this.pubsub.publish(this.pubsub.NAVIGATE_WITHOUT_TRIGGER,  args);
+      this.pubsub.publish(this.pubsub.NAVIGATE,  args);
 
       //then show results page
       this.showPage("results")

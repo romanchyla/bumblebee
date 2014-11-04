@@ -42,7 +42,6 @@ require.config({
         Resources : 'js/widgets/resources/widget',
         Export  : 'js/widgets/export/widget',
         Sort : 'js/widgets/sort/widget'
-
       },
       plugins: {
       }

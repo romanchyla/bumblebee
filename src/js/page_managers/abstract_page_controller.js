@@ -230,7 +230,7 @@ define(["marionette",
           args.path  = dataForRouter;
           args.skipHistory = true;
 
-          this.pubsub.publish(this.pubsub.NAVIGATE_WITHOUT_TRIGGER, args);
+          this.pubsub.publish(this.pubsub.NAVIGATE, args);
 
           $middleCol = $("#current-subview");
 

@@ -7,93 +7,84 @@ define([
 
     "use strict";
 
-    // Defining the application router.
     var Router = Backbone.Router.extend({
 
       initialize : function(options){
         options = options || {};
-
-        _.bindAll(this, "changeURLFromPubSub");
-        this.pageManager  = options.pageManager;
         this.history = options.history;
-
       },
 
       activate: function (beehive) {
         this.setBeeHive(beehive);
-        this.pubsub = this.getBeeHive().Services.get('PubSub');
-
-        this.pubsub.subscribe(this.pubsub.NAVIGATE_WITHOUT_TRIGGER, this.changeURLFromPubSub)
-
-      },
-
-      changeURLFromPubSub : function(options, pubsubkey){
-
-        var path = options.path;
-
-        //rewrite this to check to make sure its a valid path
-        if (!path) {
-          console.warn("can't navigate, no information given")
-          return
-        }
-        else {
-
-          var skipHistory = options.skipHistory || false;
-
-          this.navigate(path, {replace : skipHistory})
+        this.pubsub = beehive.Services.get('PubSub');
+        if (!this.pubsub) {
+          throw new Exception("Ooops! Who configured this #@$%! There is no PubSub service!")
         }
 
+        this.pubSubKey = this.pubsub.getPubSubKey();
+
+        var navigator = this.getBeeHive().Services.get('Navigator');
+        if (!navigator) {
+          throw new Exception("Ooops! Who configured this #@$%! There is no Navigator service!")
+        }
+
+        /**
+         * These 'transitions' could be defined in a separate class; for the moment let's keep
+         * them inside 'router'...
+         */
+
+        navigator.set('index-page', function() { navigator.getComponent('LandingPageManager').show()});
+        navigator.set('results-page', function() { navigator.getComponent('ResultsPageManager').show('search')});
+        navigator.set('abstract-page', function() { navigator.getComponent('AbstractPageManager').show('default')});
+        navigator.set('abstract-page:abstract', function() { navigator.getComponent('AbstractPageManager').show('abstract')});
+        navigator.set('abstract-page:citations', function() { navigator.getComponent('AbstractPageManager').show('citations')});
+        navigator.set('abstract-page:references', function() { navigator.getComponent('AbstractPageManager').show('references')});
+        navigator.set('abstract-page:coreads', function() { navigator.getComponent('AbstractPageManager').show('coreads')});
+        navigator.set('abstract-page:toc', function() { navigator.getComponent('AbstractPageManager').show('toc')});
+        navigator.set('abstract-page:similar', function() { navigator.getComponent('AbstractPageManager').show('similar')});
+        navigator.set('abstract-page:bibtex', function() { navigator.getComponent('AbstractPageManager').show('bibtex')});
+        navigator.set('abstract-page:endnote', function() { navigator.getComponent('AbstractPageManager').show('endnote')});
+        navigator.set('abstract-page:metrics', function() { navigator.getComponent('AbstractPageManager').show('metrics')});
       },
+
 
       routes: {
         "": "index",
         "search/(:query)": 'search',
-        'abs/:bibcode(/)(:subView)': 'viewAbstract',
+        'abs/:bibcode(/)(:subView)': 'view',
         '*invalidRoute': 'noPageFound'
       },
 
 
       index: function () {
-
-        this.pageManager.showPage("index");
-
+        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'index-page');
       },
 
       search: function (query) {
-
         if (query) {
           var q= new ApiQuery().load(query);
-
-          this.pubsub.publish(this.pubsub.START_SEARCH, q);
+          this.pubsub.publish(this.pubSubKey, this.pubsub.START_SEARCH, q);
         }
-        else {
-          this.pageManager.showPage("results", {triggerNav: false});
-
-        }
+        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'results-page');
       },
 
-      viewAbstract: function (bibcode, subPage) {
-
+      view: function (bibcode, subPage) {
         if (bibcode){
-
           if (!subPage) {
-            subPage = "abstract"
-            //"redirecting" to the abstract page
-            this.navigate("/abs/" + bibcode + "/abstract", {replace: true})
+            return this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'abstract-page', bibcode);
+          }
+          else {
+            return this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'abstract-page:' + subPage, bibcode);
           }
 
-         this.pageManager.showPage("abstract", {bibcode: bibcode, subPage : subPage});
-
         }
+        this.pubsub(this.pubSubKey, this.pubsub.NAVIGATE, 'results-page');
       },
 
       noPageFound : function() {
-       //i will fix this later
-
+        //i will fix this later
         $("#body-template-container").html("<div>You have broken bumblebee. (404)</div><img src=\"http://imgur.com/EMJhzmL.png\" alt=\"sad-bee\">")
-
-
-    }
+      }
 
 
     });
