@@ -29,28 +29,27 @@ define([
     ResultsControllerView = Marionette.ItemView.extend({
 
       initialize : function(options){
-
         var options = options || {};
         this.widgetDict = options.widgetDict;
-
       },
 
       template : threeColumnTemplate,
 
-      resultsControlRowTemplate  : resultsControlRowTemplate,
 
       onRender : function(){
 
         this.displayControlRow();
-        this.displayFacets();
+        this.displayLeftColumn();
         this.displayRightColumn();
-        this.displayResultsList();
+        this.displayMiddleColumn();
       },
 
 
-      displayFacets: function() {
+      displayLeftColumn: function() {
 
-        this.$(".s-left-col-container")
+        this.$(".s-left-col-container").filter('[data-widget]').each(function() {
+
+        })
           .append(this.widgetDict.authorFacets.render().el)
           .append(this.widgetDict.database.render().el)
           .append(this.widgetDict.refereed.render().el)
@@ -84,7 +83,7 @@ define([
           }
       },
 
-      displayResultsList: function () {
+      displayMiddleColumn: function () {
 
         this.widgetDict.results.view.sortView = this.widgetDict.sort.view;
 
@@ -228,7 +227,7 @@ define([
         //this has to go here to get information from beehive
         //better place to put it?
 
-        this.controllerView = new ResultsControllerView({widgetDict : this.widgetDict, debug : beehive.getDebug()});
+        this.view = new ResultsControllerView({widgetDict : this.widgetDict, debug : beehive.getDebug()});
 
 
       },
@@ -242,9 +241,9 @@ define([
           //don't call render each time or else we
           //would have to re-delegate widget events
 
-          $b.append(this.controllerView.el);
+          $b.append(this.view.el);
 
-          this.controllerView.triggerMethod("show");
+          this.view.triggerMethod("show");
 
       },
 

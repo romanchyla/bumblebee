@@ -141,7 +141,7 @@ define(["marionette",
 
         this.widgetDict.navView = this.returnNewAbstractNavView();
 
-        this.controllerView = new AbstractMasterView({widgetDict : this.widgetDict});
+        this.view = new AbstractMasterView({widgetDict : this.widgetDict});
 
         this.listenTo(this.widgetDict.navView, "navigate", this.subPageNavigate)
 
@@ -280,9 +280,9 @@ define(["marionette",
         //don't call render each time or else we
         //would have to re-delegate widget events
 
-        $b.append(this.controllerView.el);
+        $b.append(this.view.el);
 
-        this.controllerView.triggerMethod("show", this.getCurrentQuery());
+        this.view.triggerMethod("show", this.getCurrentQuery());
 
       },
 

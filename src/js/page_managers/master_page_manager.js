@@ -39,8 +39,8 @@ define([
 
       _.each(this.pageControllers, function(c){
 
-        if (c.controllerView && c.controllerView.render){
-          c.controllerView.render();
+        if (c.view && c.view.render){
+          c.view.render();
         }
       });
 
