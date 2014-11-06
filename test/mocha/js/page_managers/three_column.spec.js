@@ -1,16 +1,26 @@
 define([
-    'js/components/application',
-    'js/page_managers/three_column',
+    'underscore',
+    'jquery',
     'marionette',
+    'js/components/application',
     'js/widgets/base/base_widget',
-    'underscore'
+    'js/page_managers/three_column_view',
+    'js/page_managers/controller',
+    'hbs!/test/mocha/js/page_managers/one-column',
+    'hbs!/test/mocha/js/page_managers/three-column',
+    'js/page_managers/one_column_view'
   ],
   function(
-    Application,
-    ThreeColumnPageManager,
+    _,
+    $,
     Marionette,
+    Application,
     BaseWidget,
-    _
+    ThreeColumnView,
+    PageManagerController,
+    OneColumnTemplate,
+    ThreeColumnTemplate,
+    OneColumnView
     ) {
 
   describe("Three column PageManager", function () {
@@ -27,10 +37,11 @@ define([
             QM: 'js/components/query_mediator'
           },
           objects: {
-            ThreeColManager: 'js/page_managers/three_column'
+            PageManager: 'js/page_managers/controller'
           }
         },
         widgets: {
+          SearchWidget: 'js/widgets/search_bar/search_bar_widget',
           Results: 'js/widgets/results/widget',
           AuthorFacet: 'js/wraps/author_facet',
           GraphTabs : 'js/wraps/graph_tabs'
@@ -39,32 +50,93 @@ define([
       };
     });
 
-
-    it("should create page manager object", function() {
-      expect(new ThreeColumnPageManager()).to.be.instanceof(BaseWidget);
-    });
-
-    it("assembles the page view", function(done) {
-      var app = new Application();
-      app.loadModules(config).done(function() {
-
-        app.activate();
-
-        var pageManager = app.getObject('ThreeColManager');
-
-        pageManager.assemble(app);
-
-        $('#test').append(pageManager.view.el);
-        expect(_.keys(pageManager.widgets).length).to.be.gt(1);
-
-        var $w = pageManager.view.$el;
-        expect($w.find('[data-widget="AuthorFacet"]').children().length).to.be.equal(1);
-        expect($w.find('[data-widget="Results"]').children().length).to.be.equal(1);
-        expect($w.find('[data-widget="GraphTabs"]').children().length).to.be.equal(1);
-
-        done();
+    describe("Three column page manager", function() {
+      it("should create page manager object", function() {
+        expect(new PageManagerController()).to.be.instanceof(BaseWidget);
       });
 
+      it("assembles the page view", function(done) {
+        var app = new Application();
+        app.loadModules(config).done(function() {
+
+          // hack (normally this will not be the usage pattern)
+          var pageManager = app.getObject("PageManager");
+          pageManager.createView = function(options) {
+            var TV = ThreeColumnView.extend({template: ThreeColumnTemplate});
+            return new TV(options)
+          };
+          // var pageManager = new (PageManagerController.extend({
+          // createView: function(options) {return new ThreeColumnView(options)}
+          // }))();
+
+          app.activate();
+          pageManager.assemble(app);
+
+          //$('#test').append(pageManager.view.el);
+          expect(_.keys(pageManager.widgets).length).to.be.gt(1);
+
+          var $w = pageManager.view.$el;
+          expect($w.find('[data-widget="AuthorFacet"]').children().length).to.be.equal(1);
+          expect($w.find('[data-widget="Results"]').children().length).to.be.equal(1);
+          expect($w.find('[data-widget="GraphTabs"]').children().length).to.be.equal(1);
+
+          done();
+        });
+
+      });
+    });
+
+    describe("One column page manager", function() {
+
+      it("assembles the page view", function(done) {
+        var app = new Application();
+        app.loadModules(config).done(function() {
+
+          // hack (normally this will not be the usage pattern)
+          var pageManager = app.getObject("PageManager");
+          pageManager.createView = function(options) {
+            var TV = OneColumnView.extend({template: OneColumnTemplate});
+            return new TV(options)
+          };
+
+          app.activate();
+          pageManager.assemble(app);
+
+          //$('#test').append(pageManager.view.el);
+          var $w = pageManager.view.$el;
+          expect($w.find('[data-widget="SearchWidget"]').children().length).to.be.equal(1);
+
+          done();
+        });
+
+      });
+    });
+
+
+    describe("TOC page manager", function() {
+
+      it("assembles the page view", function(done) {
+        var app = new Application();
+        app.loadModules(config).done(function() {
+
+          // hack (normally this will not be the usage pattern)
+          var pageManager = app.getObject("PageManager");
+          pageManager.createView = function(options) {
+            var TV = OneColumnView.extend({template: OneColumnTemplate});
+            return new TV(options)
+          };
+
+          app.activate();
+          pageManager.assemble(app);
+
+          //$('#test').append(pageManager.view.el);
+          var $w = pageManager.view.$el;
+          expect($w.find('[data-widget="SearchWidget"]').children().length).to.be.equal(1);
+
+          done();
+        });
+
+      });
     });
 
 

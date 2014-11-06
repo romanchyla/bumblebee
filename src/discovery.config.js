@@ -39,7 +39,7 @@ require.config({
         }
       },
       widgets: {
-        SearchBar: 'js/widgets/search_bar/search_bar_widget',
+        SearchWidget: 'js/widgets/search_bar/search_bar_widget',
         Results: 'js/widgets/results/widget',
         QueryInfo: 'js/widgets/query_info/query_info_widget',
         QueryDebugInfo: 'js/widgets/api_query/widget',
