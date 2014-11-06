@@ -74,6 +74,21 @@ define(['js/components/generic_module', 'js/mixins/dependon',
       expect(all.args[0].slice(0,2)).to.eql(['event-foo', [1,2,3]]);
       expect(spy.args[0].slice(0,1)).to.eql([[1,2,3]]);
 
+      var clone = hardened.getHardenedInstance();
+      expect(clone.Services.__facade__).to.be.OK;
+      expect(clone.__facade__).to.be.OK;
+
+      var clonedPubSub = clone.Services.get('PubSub');
+      var clonedSpy = sinon.spy();
+      clonedPubSub.subscribe('event-foo', clonedSpy);
+      hardenedPubsub.publish('event-foo', [1,2,3]);
+      expect(all.lastCall.args.slice(0,2)).to.eql(['event-foo', [1,2,3]]);
+      expect(clonedSpy.args[0].slice(0,1)).to.eql([[1,2,3]]);
+
+      // the clone must have a different version of the hardened pubsub
+      expect(hardened.Services.get('PubSub').getPubSubKey().getId()).to.not.equal(
+        clone.Services.get('PubSub').getPubSubKey().getId()
+      );
       done();
 
     });

@@ -25,13 +25,16 @@ define([
           },
           modules: {
             QM: 'js/components/query_mediator'
+          },
+          objects: {
+            ThreeColManager: 'js/page_managers/three_column'
           }
         },
         widgets: {
           Results: 'js/widgets/results/widget',
-          QueryInfo: 'js/widgets/query_info/query_info_widget',
-          Authors: 'js/widgets/query_info/query_info_widget',
-          PageManager: 'js/page_managers/three_column'
+          AuthorFacet: 'js/wraps/author_facet',
+          GraphTabs : 'js/wraps/graph_tabs'
+
         }
       };
     });
@@ -47,12 +50,17 @@ define([
 
         app.activate();
 
-        var pageManager = app.getWidget('PageManager');
+        var pageManager = app.getObject('ThreeColManager');
 
         pageManager.assemble(app);
 
         $('#test').append(pageManager.view.el);
-        expect(_.keys(pageManager.widgets).length).to.be.equal(3);
+        expect(_.keys(pageManager.widgets).length).to.be.gt(1);
+
+        var $w = pageManager.view.$el;
+        expect($w.find('[data-widget="AuthorFacet"]').children().length).to.be.equal(1);
+        expect($w.find('[data-widget="Results"]').children().length).to.be.equal(1);
+        expect($w.find('[data-widget="GraphTabs"]').children().length).to.be.equal(1);
 
         done();
       });

@@ -28,6 +28,7 @@ require.config({
           DynamicConfig: 'discovery.vars',
           QueryMediator: 'js/components/query_mediator',
           HistoryManager: 'js/components/history_manager',
+
           LandingPageManager: 'js/page_managers/landing_page_controller',
           ResultsPageManager: 'js/page_managers/landing_page_controller',
           DocumentPageManager: 'js/page_managers/landing_page_controller'
@@ -40,18 +41,29 @@ require.config({
       widgets: {
         SearchBar: 'js/widgets/search_bar/search_bar_widget',
         Results: 'js/widgets/results/widget',
-        Abstract: 'js/widgets/abstract/widget',
         QueryInfo: 'js/widgets/query_info/query_info_widget',
         QueryDebugInfo: 'js/widgets/api_query/widget',
+        Export  : 'js/widgets/export/widget',
+        Sort : 'js/widgets/sort/widget',
+
+        AuthorFacet: 'js/wraps/author_facet',
+        BibgroupFacet: 'js/wraps/bibgroup_facet',
+        BibstemFacet: 'js/wraps/bibstem_facet',
+        DataFacet: 'js/wraps/data_facet',
+        DatabaseFacet: 'js/wraps/database_facet',
+        GrantsFacet: 'js/wraps/grants_facet',
+        KeywordFacet: 'js/wraps/keyword_facet',
+        RefereedFacet: 'js/wraps/refereed_facet',
+        VizierFacet: 'js/wraps/vizier_facet',
         GraphTabs : 'js/wraps/graph_tabs',
+
+        Abstract: 'js/widgets/abstract/widget',
         References: 'js/widgets/references/widget',
         Citations : 'js/widgets/citations/widget',
         Coreads : 'js/widgets/coreads/widget',
         TableOfContents : 'js/widgets/table_of_contents/widget',
         Similar : 'js/widgets/similar/widget',
-        Resources : 'js/widgets/resources/widget',
-        Export  : 'js/widgets/export/widget',
-        Sort : 'js/widgets/sort/widget'
+        Resources : 'js/widgets/resources/widget'
 
       },
       plugins: {

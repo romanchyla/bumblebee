@@ -60,6 +60,9 @@ define(['backbone', 'underscore',
       return this.Objects.remove(name);
     },
 
+    getDebug: function() {
+      return this.debug;
+    },
 
     /*
      * Wraps itself into a Facade that can be shared with other modules
@@ -70,7 +73,8 @@ define(['backbone', 'underscore',
     hardenedInterface:  {
       Services: 'services container',
       Objects: 'objects container',
-      debug: 'state of the app'
+      debug: 'state of the app',
+      getHardenedInstance: 'allow to create clone of the already hardened instance'
     }
 
 
