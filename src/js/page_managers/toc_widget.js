@@ -67,7 +67,7 @@ define([
       if (!options.model)
         options.model = new TocNavigationModel();
 
-      Marionette.ItemView.prototype.constructor.apply(this, arguments);
+      Marionette.ItemView.prototype.constructor.call(this, options);
     },
 
     serializeData : function(){

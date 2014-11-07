@@ -43,12 +43,12 @@
 define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], function(_, $, Backbone, module, BeeHive) {
 
 
-  var Application = function(config, options) {
+  var Application = function(options) {
     options || (options = {});
     this.aid = _.uniqueId('application');
-    _.extend(this, _.pick(options, ['timeout']));
+    this.debug = false;
+    _.extend(this, _.pick(options, ['timeout', 'debug']));
     this.initialize.apply(this, arguments);
-
   };
 
   var Container = function() {
@@ -134,9 +134,12 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
       var bigPromise = $.when.apply($, promises)
         .then(function () {
           _.each(arguments, function (promisedValues, idx) {
-            //console.log('results', idx, promisedValues);
-            if (_.isArray(promisedValues))
+            if (_.isArray(promisedValues)) {
+              if (self.debug) {
+                console.log('application: registering ' + promisedValues[0]);
+              }
               self._registerLoadedModules.apply(self, promisedValues);
+            }
           })
         })
         .fail(function () {
@@ -159,8 +162,16 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
       var beehive = this.getBeeHive();
       var key, module;
       var hasKey, addKey, removeKey, createInstance;
+      var self = this;
 
       createInstance = function(key, module) {
+        if (!module) {
+          console.warn('Object ' + key + ' is empty, cannot instantiate it!');
+          return;
+        }
+        if (self.debug) {
+          console.log("Creating instance of: " + key);
+        }
         if (module.prototype) {
           return new module()
         }
@@ -208,7 +219,12 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
           console.warn("Removing (existing) object into [" + section + "]: " + key);
           removeKey(key);
         }
-        addKey(key, createInstance(key, module));
+        var inst = createInstance(key, module);
+        if (!inst) {
+          console.warn('Removing ' + key + '(because it is null!)');
+          return;
+        }
+        addKey(key, inst);
       })
     },
 
@@ -242,7 +258,9 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
 
       this._checkPrescription(modulePrescription);
 
-      //console.log('_loadModules', sectionName, modulePrescription);
+      if (this.debug) {
+        console.log('application: loading ' + sectionName, modulePrescription);
+      }
 
       var ret = {};
 
@@ -292,12 +310,14 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
     },
     activate: function(options) {
       var beehive = this.getBeeHive();
-
+      var self = this;
       // services are activated without beehive
+      if (self.debug) {console.log('application: beehive.activate()')};
       beehive.activate();
 
       // modules receive elevated beehive object
       _.each(this.getAllModules(), function(el) {
+        if (self.debug) {console.log('application: mdules: ' + el[0] + '.activate()')};
         var plugin = el[1];
         if ('activate' in plugin) {
           plugin.activate(beehive);
@@ -306,12 +326,14 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
 
       // all the rest receive hardened beehive
       _.each(this.getAllPlugins(), function(el) {
+        if (self.debug) {console.log('application: plugins: ' + el[0] + '.activate()')};
         var plugin = el[1];
         if ('activate' in plugin) {
           plugin.activate(beehive.getHardenedInstance());
         }
       });
       _.each(this.getAllWidgets(), function(el) {
+        if (self.debug) {console.log('application: widget: ' + el[0] + '.activate()')};
         var plugin = el[1];
         if ('activate' in plugin) {
           plugin.activate(beehive.getHardenedInstance());
