@@ -31,7 +31,7 @@ define(["backbone",
     initialize : function(){
       this.model = new AbstractTitleModel();
       this.listenTo(this.model, "change", this.render);
-      this.listenTo(this.collection, "subPageChanged", this.renderTitleNavDescriptor)
+      this.listenTo(this.collection, "subPageChanged", this._render)
       this.on("render", this.onRender)
 
     },
@@ -47,7 +47,7 @@ define(["backbone",
       return this
     },
 
-    renderTitleNavDescriptor : function(){
+    _render : function(){
 
       var descriptor = this.collection.subPage? this.collection.subPage.descriptor : "";
 
@@ -57,7 +57,7 @@ define(["backbone",
 
 
     onRender : function(){
-      this.renderTitleNavDescriptor();
+      this._render();
     }
 
 

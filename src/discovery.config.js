@@ -57,13 +57,16 @@ require.config({
         VizierFacet: 'js/wraps/vizier_facet',
         GraphTabs : 'js/wraps/graph_tabs',
 
-        Abstract: 'js/widgets/abstract/widget',
-        References: 'js/widgets/references/widget',
-        Citations : 'js/widgets/citations/widget',
-        Coreads : 'js/widgets/coreads/widget',
-        TableOfContents : 'js/widgets/table_of_contents/widget',
-        Similar : 'js/widgets/similar/widget',
-        Resources : 'js/widgets/resources/widget'
+        ShowAbstract: 'js/widgets/abstract/widget',
+        ShowReferences: 'js/widgets/references/widget',
+        ShowCitations : 'js/widgets/citations/widget',
+        ShowCoreads : 'js/widgets/coreads/widget',
+        ShowTableOfContents : 'js/widgets/table_of_contents/widget',
+        ShowSimilar : 'js/widgets/similar/widget',
+        ShowResources : 'js/widgets/resources/widget',
+
+        TOCWidget: 'js/page_managers/toc_widget',
+        TOCTitle: 'js/page_managers/toc_title'
 
       },
       plugins: {
