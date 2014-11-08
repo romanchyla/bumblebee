@@ -17,18 +17,44 @@ define([
       initialize: function (options) {
         this.widgets = {};
         this.initialized = false;
+        this.widgetId = null;
       },
 
+      setWidgetId: function(n) {
+        this.widgetId = n;
+      },
+
+      /**
+       * Creates the view: the pagemanger view (from the template
+       * that references widgets)
+       *
+       * @param options
+       * @returns {ThreeColumnView}
+       */
       createView: function(options) {
         return new ThreeColumnView(options);
       },
 
+      /**
+       * Necessary step: during activation we'll collect list of widgets
+       * that were referenced by the template (and store them for future
+       * reference)
+       *
+       * @param beehive
+       */
       activate: function (beehive) {
-        this.pubsub = beehive.Services.get('PubSub');
+        this.pubsub = beehive.getHardenedInstance().Services.get('PubSub');
         this.view = this.createView({debug : beehive.getDebug(), widgets: this.widgets});
         this.view.render();
       },
 
+      /**
+       * This is the necessary step to activate the page manager; we'll render
+       * the widgets and append them inside the appropriate places inside the
+       * template
+       *
+       * @param app
+       */
       assemble: function(app) {
         var that = this;
         _.each(_.keys(that.widgets), function(widgetName) {
@@ -39,20 +65,48 @@ define([
           }
           else {
             console.warn("Widget " + widgetName + " is not available (ignoring it)");
+            delete that.widgets[widgetName];
           }
         });
       },
 
+      /**
+       * Display the widgets that are under our control (and hide all the rest)
+       *
+       * @param pageName
+       * @returns {exports.el|*|queryBuilder.el|p.el|AppView.el|view.el}
+       */
       show: function(pageName) {
-        if (this.widgets[pageName]) {
-          this.view.$el.children().detach();
 
-          //don't call render each time or else we
-          //would have to re-delegate widget events
-          this.view.$el.append(this.widgets[pageName].el);
-          this.widgets[pageName].triggerMethod('show');
-        }
+        var self = this;
+
+        // hide all widgets that are under our control
+        _.each(this.widgets, function(w) {
+          if (w.view && w.view.$el) {
+            w.view.$el.detach();
+          }
+          else if (w.$el) {
+            w.$el.detach();
+          }
+        });
+
+        // show just those that are requested
+        _.each(arguments, function(widgetName) {
+          if (self.widgets[widgetName]) {
+            var widget = self.widgets[widgetName];
+
+            //don't call render each time or else we
+            //would have to re-delegate widget events
+            self.view.$el.find('[data-widget="' + widgetName + '"]').append(widget.el ? widget.el : widget.view.el);
+            self.widgets[widgetName].triggerMethod('show');
+          }
+          else {
+            console.error("Cannot show widget: " + widgetName + "(because, frankly... there is no such widget there!)");
+          }
+        });
+        return this.view.el;
       }
+
     });
 
     return PageManagerController;

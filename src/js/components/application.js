@@ -346,6 +346,13 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
       return this.__activated || false;
     },
 
+    hasService: function(name) {
+      return this.getBeeHive().hasService(name);
+    },
+    getService: function(name) {
+      return this.getBeeHive().getService(name);
+    },
+
     hasObject: function(name) {
       return this.getBeeHive().hasObject(name);
     },

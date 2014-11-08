@@ -10,7 +10,10 @@ define([
     'hbs!/test/mocha/js/page_managers/three-column',
     'js/page_managers/one_column_view',
     'js/page_managers/toc_controller',
-    'hbs!/test/mocha/js/page_managers/toc-layout'
+    'hbs!/test/mocha/js/page_managers/toc-layout',
+    '../widgets/test_json/test1',
+    'js/components/api_response',
+    'js/components/api_query'
   ],
   function(
     _,
@@ -24,7 +27,10 @@ define([
     ThreeColumnTemplate,
     OneColumnView,
     TOCPageManagerController,
-    TOCTemplate
+    TOCTemplate,
+    testData,
+    ApiResponse,
+    ApiQuery
     ) {
 
   describe("Three column PageManager", function () {
@@ -53,7 +59,9 @@ define([
           TOCWidget: 'js/page_managers/toc_widget',
           TOCTitleWidget: 'js/page_managers/title_widget',
           ShowAbstract: 'js/widgets/abstract/widget',
-          ShowReferences: 'js/widgets/references/widget'
+          ShowReferences: 'js/widgets/references/widget',
+
+          //PageManager: 'js/page_managers/controller'
         }
       };
     });
@@ -138,13 +146,37 @@ define([
           app.activate();
           pageManager.assemble(app);
 
-          $('#test').append(pageManager.view.el);
+          //$('#test').append(pageManager.view.el);
           var $w = pageManager.view.$el;
           expect($w.find('[data-widget="SearchWidget"]').children().length).to.be.equal(1);
           expect($w.find('[data-widget="ShowAbstract"]').children().length).to.be.equal(1);
           expect($w.find('[data-widget="ShowReferences"]').children().length).to.be.equal(1);
 
-          pageManager.show('SearchWidget', 'ShowAbstract');
+          pageManager.show('SearchWidget', 'ShowAbstract', 'TOCWidget');
+
+          // deliver data to the widget for display
+          var abstract = app.getWidget('ShowAbstract');
+          var references = app.getWidget('ShowReferences');
+          var r = new ApiResponse(testData);
+          r.setApiQuery(new ApiQuery({q: 'foo'}));
+
+          abstract.processResponse(r);
+
+          // the navigation must turn active
+          expect(pageManager.view.$el.find('[data-widget-id="ShowAbstract"]').hasClass('s-abstract-nav-inactive')).to.be.false;
+          expect(pageManager.view.$el.find('[data-widget-id="ShowReferences"]').hasClass('s-abstract-nav-inactive')).to.be.true;
+
+          // simulated late arrival
+          references.processResponse(r);
+          expect(pageManager.view.$el.find('[data-widget-id="ShowAbstract"]').hasClass('s-abstract-nav-inactive')).to.be.false;
+          expect(pageManager.view.$el.find('[data-widget-id="ShowReferences"]').hasClass('s-abstract-nav-inactive')).to.be.false;
+
+          // click on the link (NAVIGATE event should be triggered)
+          var pubsub = app.getService('PubSub').getHardenedInstance();
+          var spy = sinon.spy();
+          pubsub.subscribe(pubsub.NAVIGATE, spy);
+          pageManager.view.$el.find('[data-widget-id="ShowReferences"]').click();
+          expect(spy.callCount).to.be.eql(1);
 
           done();
         });

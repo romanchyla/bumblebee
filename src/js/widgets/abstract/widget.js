@@ -149,6 +149,9 @@ define(['marionette', 'backbone', 'jquery', 'underscore', 'cache',
             this.loadBibcodeData(apiResponse.get('responseHeader.params.__show'));
           }
         }
+
+        this.trigger('page-manager-event', 'widget-ready',
+          {numFound: apiResponse.get("response.numFound"), widget: this});
       }
 
     });

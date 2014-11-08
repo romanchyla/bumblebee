@@ -92,7 +92,7 @@ define([
           return false
         }
         else if (idAttribute !== $(".s-abstract-nav-active").attr("id")) {
-          this.emitNavigateEvent($t);
+          this.emitPageManagerEvent($t);
           this.collection.setActive(idAttribute)
 
         }
@@ -115,7 +115,7 @@ define([
 
     },
 
-    emitNavigateEvent : function($t){
+    emitPageManagerEvent : function($t){
       var route = $t.attr("href");
       //taking only final path
       this.trigger("navigate", route);

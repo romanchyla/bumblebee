@@ -11,57 +11,72 @@ define([
 
     var PageManagerController = BasicPageManagerController.extend({
 
-      tocWidgetName : 'TOCWidget',
-      tocTitleWidgeName: 'TOCTitleWidget',
 
-      _updateTitle: function(currentWidget, titleWidget){
-        var data = {};
-        data.title = current.get("title");
-        data.bibcode = current.get("bibcode");
-        titleWidget.model.set(data);
+      assemble: function() {
+        BasicPageManagerController.prototype.assemble.apply(this, arguments);
+        var self = this;
+
+        // listen to every widget we manage
+        var listener = _.bind(self.onPageManagerEvent, self);
+
+        _.each(_.keys(self.widgets), function(w) {
+          self.listenTo(self.widgets[w], "page-manager-event", listener);
+          self.broadcast('page-manager-message', 'new-widget', w);
+        });
       },
 
-      show: function(pageName) {
-
+      /**
+       * broadcast the event to all other managed widgets
+       */
+      broadcast: function(){
+        var args = arguments;
         var self = this;
-        _.each(this.widgets, function(w) {
-          if (w.view && w.view.$el) {
-            w.view.$el.detach();
-          }
-          else if (w.$el) {
-            w.$el.detach();
-          }
+        _.each(_.keys(self.widgets), function(w) {
+          var widget = self.widgets[w];
+          widget.trigger.apply(widget, args);
         });
+      },
 
-        _.each(arguments, function(widgetName) {
-          if (self.widgets[widgetName]) {
-            var widget = self.widgets[widgetName];
-            //this.view.$el.children().detach();
 
-            //don't call render each time or else we
-            //would have to re-delegate widget events
-            self.view.$el.find('[data-widget="' + widgetName + '"]').append(widget.el ? widget.el : widget.view.el);
-            self.widgets[widgetName].triggerMethod('show');
+      /**
+       * Listens to and receives signals from managed widgets.
+       * It will discover their 'widgetId' and broadcasts the
+       * data to all widgets int he collection.
+       *
+       * @param event
+       * @param data
+       */
+      onPageManagerEvent: function(event, data) {
+        var self = this;
+        var sender = null; var widgetId = null;
 
-            // the the TOC widget
-            var tocWidget = self.widgets[self.tocWidgetName];
-            if (!tocWidget) {
-              console.error('TOC widget is not available, we cannot update the menu view!');
+        // try to find/identify sender
+        if (data.widget) {
+          _.each(_.pairs(self.widgets), function(w) {
+            if (w[1] === data.widget) {
+              widgetId = w[0];
+              sender = w[1];
             }
-            else {
-              //tocWidget.models.current = pageName;
-            }
+          });
+          delete data.widget;
+        }
 
-            if (self.widgets[self.tocTitleWidgeName]) {
-              //this._updateTitle(this.widgets[pageName], this.widgets[this.tocTitleWidgeName]);
-            }
-          }
-          else {
-            console.error("Cannot show widget: " + widgetName + "(because, frankly... there is no such widget there!)");
-          }
-        });
-        return this.view.el;
+        if (event == 'widget-ready' && sender !== null) {
+          data["widgetId"] = widgetId;
+          self.broadcast('page-manager-message', event, data);
+        }
+        else if (event == 'widget-selected') {
+          this.pubsub.publish(this.pubsub.NAVIGATE, this.widgetId ? this.widgetId + ':' + widgetId : widgetId);
+        }
+
+      },
+
+      onClose: function () {
+        this.stopListening();
+        this.widgets = {};
+        this.view.close();
       }
+
     });
 
     return PageManagerController;

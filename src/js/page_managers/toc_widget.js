@@ -10,49 +10,29 @@ define([
   ){
 
 
-  var TocModel = Backbone.Model.extend({
+  var WidgetData = Backbone.Model.extend({
     defaults : function(){
       return {
-        id : undefined,
-        currentSubView : false,
+        id: undefined, // widgetId
+        path: undefined,
+        title: undefined,
+        isActive : false,
+        isSelected: false,
         numFound : 0
       }
     }
   });
 
-  var TocCollection = Backbone.Collection.extend({
-
-    model : TocModel,
-
-    setActive: function(subPage){
-
-      this.each(function(m){
-        if (m.get("id")=== subPage){
-          m.set("currentSubView", true)
-        }
-        else {
-          m.set("currentSubView", false)
-        }
-      });
-
-      this.trigger("setActive");
-    },
-
-    defaults : [ {id:"bibcode"},
-      {id : "abstract", currentSubView : true, title : "Abstract"},
-      {id: "citations", showCount : true, title: "Citations"},
-      {id : "references", showCount : true, title: "References"},
-      {id : "coreads", title : "Co-Reads"},
-      {id: "tableofcontents", title: "Table of Contents"},
-      {id: "similar", title: "Similar (to add)"}
-    ]
+  var WidgetCollection = Backbone.Collection.extend({
+    model : WidgetData
   });
 
 
-  var TocNavigationModel = Backbone.Model.extend({
+  var WidgetModel = Backbone.Model.extend({
     defaults : function(){
       return {
-        bibcode : undefined
+        bibcode : undefined,
+        query: undefined
       }
     }
   });
@@ -62,12 +42,13 @@ define([
     constructor: function(options) {
       options = options || {};
       if (!options.collection)
-        options.collection = new TocCollection();
+        options.collection = new WidgetCollection();
 
       if (!options.model)
-        options.model = new TocNavigationModel();
+        options.model = new WidgetModel();
 
       Marionette.ItemView.prototype.constructor.call(this, options);
+      this.on("page-manager-message", this.onPageManagerMessage);
     },
 
     serializeData : function(){
@@ -82,14 +63,13 @@ define([
     events : {
       "click a" : function(e){
         var $t  = $(e.currentTarget);
-        var idAttribute = $t.find("div").attr("id");
+        var idAttribute = $t.find("div").attr("data-widget-id");
         if ($t.find("div").hasClass("s-abstract-nav-inactive")){
           return false;
         }
-        else if (idAttribute !== $(".s-abstract-nav-active").attr("id")) {
-          this.emitNavigateEvent($t);
-          this.collection.setActive(idAttribute)
-
+        else if (idAttribute !== $(".s-abstract-nav-active").attr("data-widget-id")) {
+          this.trigger('page-manager-event', 'widget-selected', idAttribute);
+          this.collection.get(idAttribute).set('isSelected', true);
         }
         return false;
       }
@@ -100,14 +80,29 @@ define([
     },
 
     collectionEvents : {
+      "add": "render",
       "setActive" : "render",
       "change:numFound" : "render"
     },
 
-    emitNavigateEvent : function($t){
-      var route = $t.attr("href");
-      //taking only final path
-      this.trigger("navigate", route);
+
+    onPageManagerMessage: function(event, data) {
+      if (event == 'new-widget') {
+        //this.collection.set([new WidgetData({widgetData: arguments[1]})]);
+        var widgetId = arguments[1]; var parent = this.$el.parent();
+        if (parent.data(widgetId.toLowerCase())) {
+          var title = widgetId; var path = '';
+          var parts = parent.data(widgetId.toLowerCase()).split('|');
+          title = parts[0]; path = parts[1];
+          this.collection.add({id: widgetId, title: title, path: path});
+        }
+      }
+      else if (event == 'widget-ready') {
+        var model = this.collection.get(data.widgetId);
+        if (model) {
+          model.set(_.pick(data, model.keys()));
+        }
+      }
     }
 
   });
