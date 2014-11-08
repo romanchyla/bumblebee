@@ -10,12 +10,12 @@ define(['underscore',
     var TransitionCatalog = function (options) {
       this._catalog = {};
     };
-    _.extend(Transition.prototype, {
-      add: function(name, transition) {
-        if (transition instanceof Transition) {
-          throw new Exception("You can add only Transition objects");
+    _.extend(TransitionCatalog.prototype, {
+      add: function(transition) {
+        if (!(transition instanceof Transition)) {
+          throw new Error("You can add only Transition objects");
         }
-        this._catalog[name] = transition;
+        this._catalog[transition.endpoint] = transition;
       },
       get: function(name) {
         return this._catalog[name];

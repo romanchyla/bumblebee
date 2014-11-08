@@ -255,7 +255,7 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
      * @private
      */
     _loadModules: function(sectionName, modulePrescription, ignoreErrors) {
-
+      var self = this;
       this._checkPrescription(modulePrescription);
 
       if (this.debug) {
@@ -276,7 +276,9 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
           ret[name] = modules[idx];
         });
         defer.resolve(sectionName, ret);
-        //console.log('sent results', sectionName, defer.state());
+        if (self.debug) {
+          console.log('Loaded: type=' + sectionName + ' state=' + defer.state(), ret);
+        }
       };
 
       var errback = function (err) {

@@ -13,7 +13,9 @@ define([
     'hbs!/test/mocha/js/page_managers/toc-layout',
     '../widgets/test_json/test1',
     'js/components/api_response',
-    'js/components/api_query'
+    'js/components/api_query',
+    'hbs!/test/mocha/js/page_managers/master-manager',
+    'hbs!/test/mocha/js/page_managers/simple'
   ],
   function(
     _,
@@ -24,13 +26,16 @@ define([
     ThreeColumnView,
     PageManagerController,
     OneColumnTemplate,
-    ThreeColumnTemplate,
+    ThreeColSearchResultsTemplate,
     OneColumnView,
     TOCPageManagerController,
     TOCTemplate,
     testData,
     ApiResponse,
-    ApiQuery
+    ApiQuery,
+    MasterTemplate,
+    SimpleTemplate
+
     ) {
 
   describe("Three column PageManager", function () {
@@ -47,7 +52,7 @@ define([
             QM: 'js/components/query_mediator'
           },
           objects: {
-            PageManager: 'js/page_managers/controller'
+            'Navigator': 'js/components/navigator'
           }
         },
         widgets: {
@@ -61,12 +66,12 @@ define([
           ShowAbstract: 'js/widgets/abstract/widget',
           ShowReferences: 'js/widgets/references/widget',
 
-          //PageManager: 'js/page_managers/controller'
+          PageManager: 'js/page_managers/controller'
         }
       };
     });
 
-    describe.skip("Three column page manager", function() {
+    describe("Three column page manager", function() {
       it("should create page manager object", function() {
         expect(new PageManagerController()).to.be.instanceof(BaseWidget);
       });
@@ -76,10 +81,10 @@ define([
         app.loadModules(config).done(function() {
 
           // hack (normally this will not be the usage pattern)
-          var pageManager = app.getObject("PageManager");
+          var pageManager = app.getWidget("PageManager");
           pageManager.createView = function(options) {
-            var TV = ThreeColumnView.extend({template: ThreeColumnTemplate});
-            return new TV(options)
+            var TV = ThreeColumnView.extend({template: ThreeColSearchResultsTemplate});
+            return new TV(options);
           };
           // var pageManager = new (PageManagerController.extend({
           // createView: function(options) {return new ThreeColumnView(options)}
@@ -102,14 +107,14 @@ define([
       });
     });
 
-    describe.skip("One column page manager", function() {
+    describe("One column page manager", function() {
 
       it("assembles the page view", function(done) {
         var app = new Application();
         app.loadModules(config).done(function() {
 
           // hack (normally this will not be the usage pattern)
-          var pageManager = app.getObject("PageManager");
+          var pageManager = app.getWidget("PageManager");
           pageManager.createView = function(options) {
             var TV = OneColumnView.extend({template: OneColumnTemplate});
             return new TV(options)
@@ -131,13 +136,13 @@ define([
     describe("TOC page manager", function() {
 
       it("assembles the page view", function(done) {
-        var app = new Application({debug: true});
-        config.core.objects.PageManager = 'js/page_managers/toc_controller';
+        var app = new Application({debug: false});
+        config.widgets.PageManager = 'js/page_managers/toc_controller';
 
         app.loadModules(config).done(function() {
 
           // hack (normally this will not be the usage pattern)
-          var pageManager = app.getObject("PageManager");
+          var pageManager = app.getWidget("PageManager");
           pageManager.createView = function(options) {
             var TV = ThreeColumnView.extend({template: TOCTemplate});
             return new TV(options)
@@ -178,12 +183,70 @@ define([
           pageManager.view.$el.find('[data-widget-id="ShowReferences"]').click();
           expect(spy.callCount).to.be.eql(1);
 
+          // it has to be selected and contain numcount
+          expect(pageManager.view.$el.find('[data-widget-id="ShowReferences"]').hasClass('s-abstract-nav-active')).to.be.true;
+          expect($(pageManager.view.$el.find('div[data-widget-id="ShowReferences"] span')).text().trim()).to.eql('(841359)');
           done();
         });
 
       });
     });
 
+    describe("Master page manager", function() {
+      it("swaps page managers in/out", function(done) {
+        var app = new Application({debug: true});
+        delete config.core.objects.PageManager;
+        config.widgets.FirstPageManager = 'js/page_managers/controller';
+        config.widgets.SecondPageManager = 'js/page_managers/toc_controller';
 
+        app.loadModules(config).done(function() {
+
+          var navigator = app.getObject('Navigator');
+          navigator.router = new Backbone.Router();
+
+          var firstPageManager = app.getWidget("FirstPageManager");
+          var secondPageManager = app.getWidget("SecondPageManager");
+
+          firstPageManager.createView = function(options) {
+            var TV = ThreeColumnView.extend({template: ThreeColSearchResultsTemplate});
+            return new TV(options);
+          };
+          secondPageManager.createView = function(options) {
+            var TV = ThreeColumnView.extend({template: TOCTemplate});
+            return new TV(options);
+          };
+
+          app.activate();
+          firstPageManager.assemble(app);
+          secondPageManager.assemble(app);
+
+          //var $body = $('#test');
+          var $body = $('<div/>');
+
+          navigator.set('ShowReferences', function() {
+            $body.children().detach();
+            $body.append(app.getWidget('SecondPageManager').show().el);
+          });
+
+
+          $body.append(firstPageManager.show().el);
+
+          $body.find('[data-widget="SearchWidget"] input.q').val('foo');
+          expect($body.find('[data-widget="SearchWidget"] input.q').val()).to.be.equal('foo');
+          expect($body.find('[data-widget="AuthorFacet"]').length).to.be.equal(1);
+          expect($body.find('[data-widget="TOCWidget"]').length).to.be.equal(0);
+
+          var pubsub = app.getService('PubSub').getHardenedInstance();
+          pubsub.publish(pubsub.NAVIGATE, 'ShowReferences');
+
+          expect($body.find('[data-widget="SearchWidget"] input.q').val()).to.be.equal('foo');
+          expect($body.find('[data-widget="AuthorFacet"]').length).to.be.equal(0);
+          expect($body.find('[data-widget="TOCWidget"]').length).to.be.equal(1);
+
+          done();
+        });
+
+      });
+    });
   });
 });

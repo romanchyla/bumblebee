@@ -18,6 +18,8 @@ define([
         this.widgets = {};
         this.initialized = false;
         this.widgetId = null;
+        this.assembled = false;
+        _.extend(this, _.pick(options, ['debug', 'widgetId']));
       },
 
       setWidgetId: function(n) {
@@ -44,8 +46,8 @@ define([
        */
       activate: function (beehive) {
         this.pubsub = beehive.getHardenedInstance().Services.get('PubSub');
-        this.view = this.createView({debug : beehive.getDebug(), widgets: this.widgets});
-        this.view.render();
+        this.debug = beehive.getDebug(); // XXX:rca - think of st better
+        this.view = this.createView({debug : this.debug, widgets: this.widgets});
       },
 
       /**
@@ -56,10 +58,20 @@ define([
        * @param app
        */
       assemble: function(app) {
+        if (this.assembled)
+          return this.view.el;
+
+        this.assembled = true;
+        this.view.render();
+
         var that = this;
         _.each(_.keys(that.widgets), function(widgetName) {
           var widget = app.getWidget(widgetName);
           if (widget) {
+            // maybe it is a page-manager (this is a security hole though!)
+            if (widget.assemble) {
+              widget.assemble(app);
+            }
             $(that.widgets[widgetName]).empty().append(widget.render().el);
             that.widgets[widgetName] = widget;
           }
@@ -80,6 +92,31 @@ define([
 
         var self = this;
 
+        if (!pageName) {
+          this.showAll();
+        }
+        else {
+          this.hideAll();
+          // show just those that are requested
+          _.each(arguments, function(widgetName) {
+            if (self.widgets[widgetName]) {
+              var widget = self.widgets[widgetName];
+
+              //don't call render each time or else we
+              //would have to re-delegate widget events
+              self.view.$el.find('[data-widget="' + widgetName + '"]').append(widget.el ? widget.el : widget.view.el);
+              self.widgets[widgetName].triggerMethod('show');
+            }
+            else {
+              console.error("Cannot show widget: " + widgetName + "(because, frankly... there is no such widget there!)");
+            }
+          });
+        }
+
+        return this.view;
+      },
+
+      hideAll: function() {
         // hide all widgets that are under our control
         _.each(this.widgets, function(w) {
           if (w.view && w.view.$el) {
@@ -89,22 +126,20 @@ define([
             w.$el.detach();
           }
         });
+        return this.view;
+      },
 
+      showAll: function() {
+        var self = this;
         // show just those that are requested
-        _.each(arguments, function(widgetName) {
-          if (self.widgets[widgetName]) {
+        _.each(_.keys(self.widgets), function(widgetName) {
             var widget = self.widgets[widgetName];
-
             //don't call render each time or else we
             //would have to re-delegate widget events
             self.view.$el.find('[data-widget="' + widgetName + '"]').append(widget.el ? widget.el : widget.view.el);
             self.widgets[widgetName].triggerMethod('show');
-          }
-          else {
-            console.error("Cannot show widget: " + widgetName + "(because, frankly... there is no such widget there!)");
-          }
         });
-        return this.view.el;
+        return this.view;
       }
 
     });

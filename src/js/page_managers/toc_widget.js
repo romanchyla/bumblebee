@@ -18,13 +18,26 @@ define([
         title: undefined,
         isActive : false,
         isSelected: false,
-        numFound : 0
+        numFound : 0,
+        showCount: true
       }
     }
   });
 
   var WidgetCollection = Backbone.Collection.extend({
-    model : WidgetData
+    model : WidgetData,
+    selectOne: function(widgetId) {
+      var s = null;
+      this.each(function(m) {
+        if (m.id == widgetId) {
+          s = m;
+        }
+        else {
+          m.set("isSelected", false, {silent: true});
+        }
+      });
+      s.set("isSelected", true);
+    }
   });
 
 
@@ -62,14 +75,14 @@ define([
 
     events : {
       "click a" : function(e){
-        var $t  = $(e.currentTarget);
+       var $t  = $(e.currentTarget);
         var idAttribute = $t.find("div").attr("data-widget-id");
         if ($t.find("div").hasClass("s-abstract-nav-inactive")){
           return false;
         }
         else if (idAttribute !== $(".s-abstract-nav-active").attr("data-widget-id")) {
           this.trigger('page-manager-event', 'widget-selected', idAttribute);
-          this.collection.get(idAttribute).set('isSelected', true);
+          this.collection.selectOne(idAttribute);
         }
         return false;
       }
@@ -81,7 +94,8 @@ define([
 
     collectionEvents : {
       "add": "render",
-      "setActive" : "render",
+      "change:isActive" : "render",
+      "change:isSelected": "render",
       "change:numFound" : "render"
     },
 
@@ -92,13 +106,14 @@ define([
         var widgetId = arguments[1]; var parent = this.$el.parent();
         if (parent.data(widgetId.toLowerCase())) {
           var title = widgetId; var path = '';
-          var parts = parent.data(widgetId.toLowerCase()).split('|');
-          title = parts[0]; path = parts[1];
-          this.collection.add({id: widgetId, title: title, path: path});
+          var defs = _.clone(parent.data(widgetId.toLowerCase()));
+          defs.id = widgetId;
+          this.collection.add(defs);
         }
       }
       else if (event == 'widget-ready') {
         var model = this.collection.get(data.widgetId);
+        _.defaults(data, {isActive: data.numFound ? true : false});
         if (model) {
           model.set(_.pick(data, model.keys()));
         }

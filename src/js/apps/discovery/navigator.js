@@ -6,7 +6,7 @@
 define([
     'jquery',
     'backbone',
-    'js/services/navigator'],
+    'js/components/navigator'],
   function ($, Backbone, ApiQuery, Dependon) {
 
     "use strict";

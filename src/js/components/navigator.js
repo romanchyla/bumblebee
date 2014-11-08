@@ -16,25 +16,25 @@ define(['underscore',
     'cache',
     'js/components/generic_module',
     'js/mixins/dependon',
-    'js/components/transition'],
+    'js/components/transition',
+    'js/components/transition_catalog'],
   function(
     _,
     $,
     Cache,
     GenericModule,
     Mixins,
-    Transition) {
+    Transition,
+    TransitionCatalog) {
 
 
 
     var Navigator = GenericModule.extend({
 
       initialize: function(options) {
-        if (!options.router || ! (options.router instanceof Backbone.Router)) {
-          throw new Exception('Navigator must be given \'router\' instance');
-        }
+        options = options || {};
         this.router = options.router;
-        this.catalog = {}; // catalog of nagivation points (later we can build FST)
+        this.catalog = new TransitionCatalog(); // catalog of nagivation points (later we can build FST)
         this.pubsub = null;
       },
 
@@ -57,6 +57,10 @@ define(['underscore',
        * Responds to PubSubEvents.NAVIGATE signal
        */
       onNavigate: function(ev, arg1, arg2) {
+
+        if (!this.router || ! (this.router instanceof Backbone.Router)) {
+          throw new Error('Navigator must be given \'router\' instance');
+        }
 
         var transition = this.catalog.get(ev);
         if (!transition) {
@@ -124,7 +128,7 @@ define(['underscore',
 
       get: function(endpoint) {
         return this.catalog.get(endpoint);
-      },
+      }
 
 
 
