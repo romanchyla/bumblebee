@@ -5,20 +5,12 @@
 define([
     'underscore',
     'backbone',
-    'js/page_managers/abstract_page_controller',
-    'js/page_managers/results_page_controller',
-    'js/page_managers/landing_page_controller',
-    'js/page_managers/master_page_manager',
     'js/components/api_query',
     'js/components/api_request'
     ],
   function(
     _,
     Backbone,
-    AbstractController,
-    ResultsController,
-    LandingPageController,
-    MasterPageManager,
     ApiQuery,
     ApiRequest) {
 

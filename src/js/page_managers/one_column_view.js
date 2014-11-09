@@ -1,13 +1,11 @@
 define([
     "marionette",
     "hbs!./templates/landing-page-layout",
-    'js/widgets/base/base_widget',
-    './view_mixin'
+    'js/widgets/base/base_widget'
   ],
   function (Marionette,
             pageTemplate,
-            BaseWidget,
-            PageManagerViewMixin
+            BaseWidget
             ) {
 
     var OneColumnView = Marionette.ItemView.extend({
@@ -30,7 +28,6 @@ define([
 
 
     });
-    _.extend(OneColumnView.prototype, PageManagerViewMixin);
     return OneColumnView;
 
   });

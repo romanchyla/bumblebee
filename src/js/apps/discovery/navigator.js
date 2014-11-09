@@ -17,8 +17,12 @@ define([
         /**
          * These 'transitions' are what happens inside 'discovery' application
          */
+        var pubsub = this.pubsub;
+        var self = this;
+        pubsub.subscribe(this.pubSubKey, pubsub.START_SEARCH, function() {self.navigate('results-page')});
 
-        this.set('index-page', function() { app.getObject('MasterPageManager').show('LandingPage')});
+        this.set('index-page', function() {
+          app.getObject('MasterPageManager').show('LandingPage')});
         this.set('results-page', function() { app.getObject('MasterPageManager').show('SearchPage')});
         this.set('abstract-page', function() { app.getObject('MasterPageManager').show('DetailsPage')});
         this.set('abstract-page:abstract', function() { app.getObject('MasterPageManager').show('DetailsPage')});

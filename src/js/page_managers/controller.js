@@ -3,13 +3,15 @@ define([
     "hbs!./templates/results-page-layout",
     'hbs!./templates/results-control-row',
     'js/widgets/base/base_widget',
-    './three_column_view'
+    './three_column_view',
+    './view_mixin'
   ],
   function (Marionette,
             pageTemplate,
             controlRowTemplate,
             BaseWidget,
-            ThreeColumnView
+            ThreeColumnView,
+            PageManagerViewMixin
             ) {
 
     var PageManagerController = BaseWidget.extend({
@@ -65,7 +67,7 @@ define([
         this.view.render();
 
         var that = this;
-        _.extend(that.widgets, that.view.getWidgetsFromTemplate(that.view.$el));
+        _.extend(that.widgets, that.getWidgetsFromTemplate(that.view.$el));
 
         _.each(_.keys(that.widgets), function(widgetName) {
           var widget = app.getWidget(widgetName);
@@ -146,5 +148,6 @@ define([
 
     });
 
+    _.extend(PageManagerController.prototype, PageManagerViewMixin);
     return PageManagerController;
   });

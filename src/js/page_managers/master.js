@@ -53,7 +53,8 @@ define([
       return {
         name: undefined,
         numCalled: 0,
-        numAttached: 0
+        numAttached: 0,
+        ariaAnnouncement: undefined
       }
     }
   });
@@ -81,6 +82,9 @@ define([
 
           this.$el.append(res.el);
           model.attributes.numAttach += 1;
+
+          //scroll up automatically
+          window.scrollTo(0,0);
         }
         else {
           if (model.attributes.object.view.$el.parent().length > 0) {
@@ -105,6 +109,11 @@ define([
       this.view = new MasterView(options);
       this.collection = this.view.collection;
       this.model = this.view.model;
+    },
+
+    activate: function(beehive) {
+      this.pubsub = beehive.getHardenedInstance().getService('PubSub');
+      this.pubsub.subscribe(this.pubsub.ARIA_ANNOUNCEMENT, this.handleAriaAnnouncement);
     },
 
     assemble: function(app) {
@@ -133,6 +142,9 @@ define([
         if (!pm.attributes.isSelected) {
           this.hideAll();
         }
+
+        this.pubsub.publish(this.pubsub.ARIA_ANNOUNCEMENT, "Switching to: " + pageManager);
+
         pm.set({'id': pageManager, 'isSelected': true, options: options});
       }
       else {
@@ -146,6 +158,11 @@ define([
           model.set('isSelected', false);
         }
       });
+    },
+
+    handleAriaAnnouncement: function(msg) {
+      //TODO: insert this into the page
+      console.log('Aria Announcement: ' + msg);
     }
 
   });

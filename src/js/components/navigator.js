@@ -49,14 +49,14 @@ define(['underscore',
         var pubsub = beehive.Services.get('PubSub');
         this.pubSubKey = pubsub.getPubSubKey();
 
-        pubsub.subscribe(this.pubSubKey, pubsub.NAVIGATE, _.bind(this.onNavigate, this));
+        pubsub.subscribe(this.pubSubKey, pubsub.NAVIGATE, _.bind(this.navigate, this));
         this.pubsub = pubsub;
       },
 
       /**
        * Responds to PubSubEvents.NAVIGATE signal
        */
-      onNavigate: function(ev, arg1, arg2) {
+      navigate: function(ev, arg1, arg2) {
 
         if (!this.router || ! (this.router instanceof Backbone.Router)) {
           throw new Error('Navigator must be given \'router\' instance');

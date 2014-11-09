@@ -78,10 +78,31 @@ define(['backbone', 'underscore',
     }
 
 
-
   });
 
-  _.extend(BeeHive.prototype, Hardened);
+  _.extend(BeeHive.prototype, Hardened, {
+    getHardenedInstance: function(iface) {
+      iface = _.clone(iface || this.hardenedInterface);
+
+      // because 'facade' functions are normally bound to the
+      // original object, we have to do this to access 'facade'
+      iface['getService'] = function(name) { // 'get service X (but only the hardened ones)',
+        return hardened.Services.get(name);
+      };
+      iface['hasService'] = function(name) {
+        return hardened.Services.has(name);
+      };
+      iface['getObject'] = function(name) { // 'get object X (but only the hardened ones)',
+        return hardened.Objects.get(name);
+      };
+      iface['hasObject'] = function(name) {
+        return hardened.Objects.has(name);
+      };
+
+      var hardened = this._getHardenedInstance(iface, this);
+      return hardened;
+    }
+  });
 
   return BeeHive;
 });

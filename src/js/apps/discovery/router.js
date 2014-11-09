@@ -53,7 +53,7 @@ define([
           }
 
         }
-        this.pubsub.publish(this.pubsub.NAVIGATE, 'results-page');
+        this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page');
       },
 
       noPageFound : function() {

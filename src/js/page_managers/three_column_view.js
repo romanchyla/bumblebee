@@ -2,14 +2,12 @@ define([
     "marionette",
     "hbs!./templates/results-page-layout",
     'hbs!./templates/results-control-row',
-    'js/widgets/base/base_widget',
-    './view_mixin'
+    'js/widgets/base/base_widget'
   ],
   function (Marionette,
             pageTemplate,
             controlRowTemplate,
-            BaseWidget,
-            PageManagerViewMixin
+            BaseWidget
             ) {
 
     var ThreeColumnView = Marionette.ItemView.extend({
@@ -27,9 +25,6 @@ define([
 
       onRender : function(){
         var self = this;
-        //var widgets = this.getWidgetsFromTemplate(this.$el,
-        //  !Marionette.getOption(this, "debug"));
-        //_.extend(this.widgets, widgets);
 
         this.$("#results-control-row")
           .append(controlRowTemplate());
@@ -154,7 +149,6 @@ define([
       }
 
     });
-    _.extend(ThreeColumnView.prototype, PageManagerViewMixin);
     return ThreeColumnView;
 
   });
