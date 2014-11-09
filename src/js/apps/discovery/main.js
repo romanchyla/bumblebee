@@ -23,8 +23,11 @@ define(["config", 'module'], function(config, module) {
       DiscoveryBootstrap
       ) {
 
+      // at the beginning, we don't know anything about ourselves...
+      var debug = window.location.search.indexOf('debug') > -1 ? true : false;
 
-      var app = new (Application.extend(DiscoveryBootstrap))();
+      // app object will load everything
+      var app = new (Application.extend(DiscoveryBootstrap))({'debug': debug});
 
       // load the objects/widgets/modules (using discovery.config.js)
       var defer = app.loadModules(module.config());
@@ -48,17 +51,13 @@ define(["config", 'module'], function(config, module) {
             api.expires_in = data.expires_in;
           }
 
-
-          var navigator = app.getBeeHive().Services.get('Navigator');
-          if (!navigator) {
-            throw new Exception("Ooops! Who configured this #@$%! There is no Navigator service!")
-          }
-
-          navigator.start(app);
-
           app.start(Router);
 
-
+          var dynConf = app.getObject('DynamicConfig');
+          if (dynConf && dynConf.debug) {
+            console.log('Exposing Bumblebee as global object: window.bbb');
+            window.bbb = app;
+          }
 
         }).fail(function () {
           app.redirect('/505.html');

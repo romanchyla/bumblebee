@@ -136,6 +136,7 @@ define([
 
       it("assembles the page view", function(done) {
         var app = new Application({debug: false});
+        delete config.core.objects.Navigator;
         config.widgets.PageManager = 'js/page_managers/toc_controller';
 
         app.loadModules(config).done(function() {
@@ -192,7 +193,7 @@ define([
     });
 
     describe("Master page manager", function() {
-      it.skip("swapping of page managers in/out manually", function(done) {
+      it("swapping of page managers in/out manually", function(done) {
         var app = new Application({debug: false});
         delete config.widgets.PageManager;
         config.widgets.FirstPageManager = 'js/page_managers/controller';

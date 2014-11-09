@@ -283,8 +283,8 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
 
       var errback = function (err) {
         var symbolicName = err.requireModules && err.requireModules[0];
+        console.warn("Error loading impl=" + symbolicName);
         if (ignoreErrors) {
-          console.warn("Error loading impl=" + symbolicName);
           console.warn("Ignoring error");
           return;
         }
@@ -315,11 +315,11 @@ define(['underscore', 'jquery', 'backbone', 'module', 'js/components/beehive'], 
       var self = this;
       // services are activated without beehive
       if (self.debug) {console.log('application: beehive.activate()')};
-      beehive.activate();
+      beehive.activate(beehive);
 
       // modules receive elevated beehive object
       _.each(this.getAllModules(), function(el) {
-        if (self.debug) {console.log('application: mdules: ' + el[0] + '.activate()')};
+        if (self.debug) {console.log('application: modules: ' + el[0] + '.activate()')};
         var plugin = el[1];
         if ('activate' in plugin) {
           plugin.activate(beehive);

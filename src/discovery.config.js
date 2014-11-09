@@ -21,7 +21,7 @@ require.config({
         services: {
           'Api': 'js/services/api',
           'PubSub': 'js/services/pubsub',
-          'Navigator': 'js/apps/discovery/nagivator'
+          'Navigator': 'js/apps/discovery/navigator'
         },
         objects: {
           User: 'js/components/user',
@@ -29,16 +29,17 @@ require.config({
           QueryMediator: 'js/components/query_mediator',
           HistoryManager: 'js/components/history_manager',
 
-          LandingPageManager: 'js/page_managers/landing_page_controller',
-          ResultsPageManager: 'js/page_managers/landing_page_controller',
-          DocumentPageManager: 'js/page_managers/landing_page_controller'
-
+          MasterPageManager: 'js/page_managers/master'
         },
         modules: {
           FacetFactory: 'js/widgets/facet/factory'
         }
       },
       widgets: {
+        LandingPage: 'js/wraps/landing_page_manager',
+        SearchPage: 'js/wraps/results_page_manager',
+        DetailsPage: 'js/wraps/details_page_manager',
+
         SearchWidget: 'js/widgets/search_bar/search_bar_widget',
         Results: 'js/widgets/results/widget',
         QueryInfo: 'js/widgets/query_info/query_info_widget',
@@ -65,8 +66,7 @@ require.config({
         ShowSimilar : 'js/widgets/similar/widget',
         ShowResources : 'js/widgets/resources/widget',
 
-        TOCWidget: 'js/page_managers/toc_widget',
-        TOCTitle: 'js/page_managers/toc_title'
+        TOCWidget: 'js/page_managers/toc_widget'
 
       },
       plugins: {

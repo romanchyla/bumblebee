@@ -136,7 +136,7 @@ define([
         pm.set({'id': pageManager, 'isSelected': true, options: options});
       }
       else {
-        console.error('eeeek, you want me to display: ' + pageManager + ' (but I cant, cause there is no such PM!)')
+        console.error('eeeek, you want me to display: ' + pageManager + ' (but I cant, cause there is no such Page!)')
       }
     },
 

@@ -115,6 +115,11 @@ define([
      * @param errorPage
      */
     reload: function(endPage) {
+      if (location.search.indexOf('debug') > -1) {
+        console.warn('Debug stop, normally would reload to: ' + endPage);
+        return; // do nothing
+      }
+
       if (location.search && location.search.indexOf('bbbRedirect=1') > -1) {
         return this.redirect(endPage);
       }
@@ -137,46 +142,38 @@ define([
       var app = this;
       var beehive = this.getBeeHive();
       var api = beehive.getService("Api");
-      var FacetFactory = app.getModule("FacetFactory");
       var conf = this.getObject('DynamicConfig');
 
+      var complain = function(x) {
+        throw new Error("Ooops. Check you config! There is no " + x + " component @#!")
+      };
+
+      var navigator = app.getBeeHive().Services.get('Navigator');
+      if (!navigator)
+        complain('services.Navigator');
 
 
+      var masterPageManager = app.getObject('MasterPageManager');
+      if (!masterPageManager)
+        complain('objects.MasterPageManager');
+
+      // get together all pages and insert widgets there
+      masterPageManager.assemble(app);
+
+      // attach the master page to the body
+      $('div#body-template-container').append(masterPageManager.view.el);
 
 
-      var bumblebeeHistory = app.getObject("HistoryManager");
-
-      var pageControllers = {};
-      pageControllers.results = app.getWidget()
-
-
-      pageControllers.abstract = new AbstractController({widgetDict: {
-        abstract: abstract,
-        references: references,
-        citations: citations,
-        coreads: coreads,
-        tableOfContents: tableOfContents,
-        similar: similar,
-        searchBar: resultsWidgetDict.searchBar,
-        resources: resources
-      }});
-
-      pageControllers.index = new LandingPageController({widgetDict: {searchBar: resultsWidgetDict.searchBar}});
-
-      _.each(pageControllers, function (v, k) {
-        v.activate(beehive.getHardenedInstance())
-      });
-
-      var masterPageManager = new MasterPageManager({pageControllers: pageControllers, history: bumblebeeHistory});
-
-      masterPageManager.activate(beehive.getHardenedInstance());
-
-      app.router = new Router({pageManager: masterPageManager});
+      // kick off routing
+      app.router = new Router();
       app.router.activate(beehive.getHardenedInstance());
 
+      // get ready to handle navigation signals
+      navigator.start(this);
+      navigator.router = app.router; // this feels hackish
+
+
       // Trigger the initial route and enable HTML5 History API support
-
-
       Backbone.history.start(conf.routerConf);
 
 
