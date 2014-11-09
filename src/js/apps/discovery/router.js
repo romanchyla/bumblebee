@@ -38,20 +38,21 @@ define([
       search: function (query) {
         if (query) {
           var q= new ApiQuery().load(query);
-          this.pubsub.publish(this.pubSubKey, this.pubsub.START_SEARCH, q);
+          this.pubsub.publish(this.pubsub.START_SEARCH, q);
         }
         this.pubsub.publish(this.pubsub.NAVIGATE, 'results-page');
       },
 
       view: function (bibcode, subPage) {
         if (bibcode){
+          this.pubsub.publish(this.pubsub.DISPLAY_DOCUMENTS, new ApiQuery({'q': 'bibcode:' + bibcode}));
+
           if (!subPage) {
             return this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page', bibcode);
           }
           else {
             return this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page:' + subPage, bibcode);
           }
-
         }
         this.pubsub.publish(this.pubsub.NAVIGATE, 'abstract-page');
       },

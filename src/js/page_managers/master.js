@@ -78,7 +78,7 @@ define([
       onSelectedChange: function(model) {
         if (model.attributes.isSelected) {
           // call the subordinate page-manager
-          var res = model.attributes.object.show(model.attributes.options);
+          var res = model.attributes.object.show.apply(model.attributes.object, model.attributes.options);
 
           this.$el.append(res.el);
           model.attributes.numAttach += 1;
