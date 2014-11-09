@@ -65,6 +65,8 @@ define([
         this.view.render();
 
         var that = this;
+        _.extend(that.widgets, that.view.getWidgetsFromTemplate(that.view.$el));
+
         _.each(_.keys(that.widgets), function(widgetName) {
           var widget = app.getWidget(widgetName);
           if (widget) {

@@ -54,7 +54,7 @@ define(["config", 'module'], function(config, module) {
           app.start(Router);
 
           var dynConf = app.getObject('DynamicConfig');
-          if (dynConf && dynConf.debug) {
+          if (dynConf && dynConf.debugExportBBB) {
             console.log('Exposing Bumblebee as global object: window.bbb');
             window.bbb = app;
           }

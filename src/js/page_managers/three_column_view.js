@@ -27,9 +27,9 @@ define([
 
       onRender : function(){
         var self = this;
-        var widgets = this.getWidgetsFromTemplate(this.$el,
-          !Marionette.getOption(this, "debug"));
-        _.extend(this.widgets, widgets);
+        //var widgets = this.getWidgetsFromTemplate(this.$el,
+        //  !Marionette.getOption(this, "debug"));
+        //_.extend(this.widgets, widgets);
 
         this.$("#results-control-row")
           .append(controlRowTemplate());
