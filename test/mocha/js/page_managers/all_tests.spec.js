@@ -62,7 +62,6 @@ define([
           GraphTabs : 'js/wraps/graph_tabs',
 
           TOCWidget: 'js/page_managers/toc_widget',
-          TOCTitleWidget: 'js/page_managers/title_widget',
           ShowAbstract: 'js/widgets/abstract/widget',
           ShowReferences: 'js/widgets/references/widget',
 
@@ -193,9 +192,9 @@ define([
     });
 
     describe("Master page manager", function() {
-      it("swaps page managers in/out", function(done) {
-        var app = new Application({debug: true});
-        delete config.core.objects.PageManager;
+      it.skip("swapping of page managers in/out manually", function(done) {
+        var app = new Application({debug: false});
+        delete config.widgets.PageManager;
         config.widgets.FirstPageManager = 'js/page_managers/controller';
         config.widgets.SecondPageManager = 'js/page_managers/toc_controller';
 
@@ -223,7 +222,7 @@ define([
           //var $body = $('#test');
           var $body = $('<div/>');
 
-          navigator.set('ShowReferences', function() {
+          navigator.set('show-stuff', function() {
             $body.children().detach();
             $body.append(app.getWidget('SecondPageManager').show().el);
           });
@@ -237,7 +236,7 @@ define([
           expect($body.find('[data-widget="TOCWidget"]').length).to.be.equal(0);
 
           var pubsub = app.getService('PubSub').getHardenedInstance();
-          pubsub.publish(pubsub.NAVIGATE, 'ShowReferences');
+          pubsub.publish(pubsub.NAVIGATE, 'show-stuff');
 
           expect($body.find('[data-widget="SearchWidget"] input.q').val()).to.be.equal('foo');
           expect($body.find('[data-widget="AuthorFacet"]').length).to.be.equal(0);
@@ -246,6 +245,58 @@ define([
           done();
         });
 
+      });
+
+      it("using PageManager object", function(done) {
+          var app = new Application({debug: false});
+          delete config.widgets.PageManager;
+          config.core.objects.PageManager = 'js/page_managers/master';
+          config.widgets.FirstPageManager = 'js/page_managers/controller';
+          config.widgets.SecondPageManager = 'js/page_managers/toc_controller';
+
+          app.loadModules(config).done(function() {
+
+            var navigator = app.getObject('Navigator');
+            navigator.router = new Backbone.Router();
+
+            var masterPageManager = app.getObject('PageManager');
+            var firstPageManager = app.getWidget("FirstPageManager");
+            var secondPageManager = app.getWidget("SecondPageManager");
+
+            firstPageManager.createView = function(options) {
+              var TV = ThreeColumnView.extend({template: ThreeColSearchResultsTemplate});
+              return new TV(options);
+            };
+            secondPageManager.createView = function(options) {
+              var TV = ThreeColumnView.extend({template: TOCTemplate});
+              return new TV(options);
+            };
+
+            app.activate();
+            masterPageManager.assemble(app);
+
+            navigator.set('show-stuff', function() {
+              app.getObject('PageManager').show('SecondPageManager');
+            });
+
+            //var $body = $('#test'); $body.append(masterPageManager.view.el);
+
+            masterPageManager.show('FirstPageManager');
+
+            masterPageManager.view.$el.find('[data-widget="SearchWidget"] input.q').val('foo');
+            expect(masterPageManager.view.$el.find('[data-widget="SearchWidget"] input.q').val()).to.be.equal('foo');
+            expect(masterPageManager.view.$el.find('[data-widget="AuthorFacet"]').length).to.be.equal(1);
+            expect(masterPageManager.view.$el.find('[data-widget="TOCWidget"]').length).to.be.equal(0);
+
+            var pubsub = app.getService('PubSub').getHardenedInstance();
+            pubsub.publish(pubsub.NAVIGATE, 'show-stuff');
+
+            expect(masterPageManager.view.$el.find('[data-widget="SearchWidget"] input.q').val()).to.be.equal('foo');
+            expect(masterPageManager.view.$el.find('[data-widget="AuthorFacet"]').length).to.be.equal(0);
+            expect(masterPageManager.view.$el.find('[data-widget="TOCWidget"]').length).to.be.equal(1);
+
+            done();
+          });
       });
     });
   });
