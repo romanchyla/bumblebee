@@ -384,7 +384,7 @@ module.exports = function(grunt) {
     },
 
     blanket_mocha: {
-      all: ["test/**/example.spec.html"],
+      all: ["test/**/discovery.spec.html"],
       options: {
         threshold: 10,
         run: false

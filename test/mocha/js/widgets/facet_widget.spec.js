@@ -86,8 +86,9 @@ define([
         done();
       });
 
-      it("should throw errors when you instantiate it without proper variables", function() {
+      it("should throw errors when you instantiate it without proper variables", function(done) {
         expect(function() {new FacetWidget()}).to.throw.Error;
+        done();
       });
 
 
@@ -308,18 +309,19 @@ define([
 
         var c = new FacetCollection(fakeFacetData);
 
-        it("should have text preprocessing functions for raw solr data", function () {
+        it("should have text preprocessing functions for raw solr data", function (done) {
           expect(c).to.have.property("titleCase");
           expect(c).to.have.property("allCaps");
           expect(c).to.have.property("removeSlash");
+          done();
 
         });
-        it("should initiate a facet model with appropriate default values", function () {
+        it("should initiate a facet model with appropriate default values", function (done) {
           //for change-apply containers
           expect(c.models[0].attributes).to.include.key("newValue");
           //for logic containers
           expect(c.models[0].attributes).to.include.key("selected");
-
+          done();
         })
 
       });
