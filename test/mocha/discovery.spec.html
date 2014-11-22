@@ -54,7 +54,11 @@
        configured properly to load the test runner -->
        
   <script data-main="../../src/discovery.config" src="../../bower_components/requirejs/require.js"></script>
-  
+
+  <script src="../../bower_components/blanket/dist/qunit/blanket.js" data-cover-only="../../src/js"></script>
+
+  <script type="text/javascript" src="../../node_modules/grunt-blanket-mocha/support/mocha-blanket.js"></script>
+
   <!-- Test Fixtures. -->
     <div id="fixtures"
          style="display: none; visibility: hidden;"></div>

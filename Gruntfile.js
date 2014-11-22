@@ -226,7 +226,7 @@ module.exports = function(grunt) {
     //**
     mocha_phantomjs: {
       options: {
-        //'reporter': 'progress',
+        //'reporter': 'json-cov',
         'output': 'test/reports/' + (grunt.option('testname') || 'mocha/discovery')
       },
 
@@ -342,6 +342,59 @@ module.exports = function(grunt) {
           'src/styles/css/styles.css': 'src/styles/less/manifest.less'
         }
       }
+    },
+
+    mocha_istanbul: {
+      coverage: {
+        src: 'test/mocha', // a folder works nicely
+        options: {
+          mask: '**/*.spec.js'
+        }
+      },
+      coverageSpecial: {
+        src: ['testSpecial/*/*.js', 'testUnique/*/*.js'], // specifying file patterns works as well
+        options: {
+          coverageFolder: 'coverageSpecial',
+          mask: '*.spec.js'
+        }
+      },
+      coveralls: {
+        src: ['test', 'testSpecial', 'testUnique'], // multiple folders also works
+        options: {
+          coverage:true,
+          check: {
+            lines: 75,
+            statements: 75
+          },
+          root: './lib', // define where the cover task should consider the root of libraries that are covered by tests
+          reportFormats: ['cobertura','lcovonly']
+        }
+      }
+    },
+    istanbul_check_coverage: {
+      default: {
+        options: {
+          coverageFolder: 'coverage*', // will check both coverage folders and merge the coverage results
+          check: {
+            lines: 80,
+            statements: 80
+          }
+        }
+      }
+    },
+
+    blanket_mocha: {
+      all: ["test/**/example.spec.html"],
+      options: {
+        threshold: 10,
+        run: false
+      }
+    },
+
+    mocha: {
+      test: {
+        src: ['test/mocha/**/discovery.spec.html']
+      }
     }
 
   });
@@ -387,14 +440,12 @@ module.exports = function(grunt) {
   // other 3rd party libs
   grunt.loadNpmTasks('grunt-processhtml');
   grunt.loadNpmTasks('grunt-contrib-less');
-
-  // Bower tasks
   grunt.loadNpmTasks('grunt-bower-task');
-
-  //npm install
   grunt.loadNpmTasks('grunt-install-dependencies');
-
   grunt.loadNpmTasks('grunt-concurrent');
+  grunt.loadNpmTasks('grunt-mocha-istanbul');
+  grunt.loadNpmTasks('grunt-mocha');
+  grunt.loadNpmTasks("grunt-blanket-mocha");
 
   // Create an aliased test task.
   grunt.registerTask('setup', 'Sets up the development environment',
