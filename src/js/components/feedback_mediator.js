@@ -7,7 +7,8 @@
  * and react on them
  */
 
-define(['underscore',
+define([
+    'underscore',
     'jquery',
     'cache',
     'js/components/generic_module',
@@ -35,6 +36,7 @@ define(['underscore',
     initialize: function(options) {
       this._cache = this._getNewCache(options.cache);
       this.debug = options.debug || false;
+      this._handlers = {}; // TODO: expose api to register handlers
     },
 
     activateCache: function() {
@@ -44,7 +46,7 @@ define(['underscore',
 
     _getNewCache: function(options) {
       return new Cache(_.extend({
-        'maximumSize': 100,
+        'maximumSize': 150,
         'expiresAfterWrite':60*30 // 30 mins
       }, _.isObject(options) ? options : {}));
     },
@@ -75,27 +77,91 @@ define(['underscore',
      */
     receiveFeedback: function(apiFeedback, senderKey) {
       if (this.debug)
-        console.log('[EM]: received feedback:', apiFeedback.toJSON(), senderKey.getId());
+        console.log('[EM]: received feedback:', apiFeedback.toJSON(), senderKey ? senderKey.getId() : null);
 
-      var ps = this.getBeeHive().Services.get('PubSub');
-
-      var componentKey = this.getCacheKey(apiFeedback, senderKey);
-      var entry = this._cache.getSync(componentKey);
+      var componentKey = this._getCacheKey(apiFeedback, senderKey);
+      var entry = this._retrieveCacheEntry(componentKey);
       if (!entry) {
-        entry = this.createNewCacheEntry();
+        entry = this.createNewCacheEntry(componentKey);
         this._cache.put(componentKey, entry);
       }
 
-      if (this.handleBenignFeedback(entry, apiFeedback))
-        return;
+      var handler = this.getFeedbackHandler(apiFeedback, entry);
+      if (handler) {
+        if (handler.execute && handler.execute(apiFeedback, entry)) {
+          return;
+        }
+        else if (handler.apply(this, apiFeedback, entry)) {
+          return;
+        }
+      }
 
+      this.handleFeedback(apiFeedback, entry);
+    },
+
+    addFeedbackHandler: function(code, func) {
+      if (!code && !_.isNumber(code))
+        throw new Error('first argument must be code or code:string or string');
+      if (!(_.isFunction(func)))
+        throw new Error('second argument must be executable');
+      this._handlers[code.toString()] = func;
+    },
+
+    getFeedbackHandler: function(apiFeedback, entry) {
+      var keys = [entry.id + ':' + apiFeedback.code, entry.id, apiFeedback.code];
+      for (var i=0; i<keys.length; i++) {
+        if (keys[i] in this._handlers) {
+          return this._handlers[keys[i]];
+        }
+      }
+    },
+
+    _retrieveCacheEntry: function(componentKey) {
+      return this._cache.getSync(componentKey);
+    },
+
+
+    /**
+     * Creates a unique, cleaned key from the request and the apiQuery
+     * @param apiRequest
+     */
+    _getCacheKey: function(apiFeedback, senderKey) {
+      if (!apiFeedback)
+        throw new Error('ApiFeedback cannot be empty');
+      if (apiFeedback.getSenderKey())
+        return apiFeedback.getSenderKey();
+      if (senderKey)
+        return senderKey;
+      var req = apiFeedback.getApiRequest();
+      if (req) {
+        return req.url();
+      }
+      throw new Error('We cannot identify the origin (recipient) of this feedback');
+    },
+
+
+    createNewCacheEntry: function(componentKey) {
+      return {
+        waiting: 0,
+        max: 0,
+        errors: 0,
+        counter: 0,
+        created: Date.now(),
+        id: componentKey
+      }
+    },
+
+    handleFeedback: function(apiFeedback, entry) {
       var c = ApiFeedback.CODES;
+
+      entry.counter += 1;
+
       switch(apiFeedback.code) {
         case c.ALL_FINE:
           entry.errors = 0;
           break;
         case c.KEEP_WAITING:
-          entry.waiting += entry.started
+          entry.waiting += entry.started;
           break;
         case c.SERVER_ERROR:
 
@@ -103,24 +169,6 @@ define(['underscore',
 
         default:
       }
-
-
-    },
-
-
-
-
-    /**
-     * Creates a unique, cleaned key from the request and the apiQuery
-     * @param apiRequest
-     */
-    getCacheKey: function(apiRequest) {
-      var oldQ = apiRequest.get('query');
-      var newQ = this.queryUpdater.clean(oldQ);
-      apiRequest.set('query', newQ);
-      var key = apiRequest.url();
-      apiRequest.set('query', oldQ);
-      return key;
     }
 
   });
