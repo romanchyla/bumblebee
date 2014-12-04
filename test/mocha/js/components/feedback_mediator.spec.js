@@ -50,8 +50,8 @@ define([
 
       expect(fm.receiveFeedback.callCount).to.be.eql(1);
 
-      //minsub.publish(minsub.createRequest({'target': '/foo',
-      //  'query': minsub.createQuery({'q': 'foo:bar'})}))
+      minsub.publish(minsub.createRequest({'target': '/foo',
+        'query': minsub.createQuery({'q': 'foo:bar'})}))
     });
 
     it("has all methods necessary to manage its own state and receive FEEDBACK events", function() {
@@ -76,8 +76,25 @@ define([
       expect(ck).to.be.eql('fooId');
       expect(fm._retrieveCacheEntry(ck)).to.be.null;
 
+
       fm.receiveFeedback(f, null);
+      expect(h200FooId.callCount).to.be.eql(1);
+
+
+      fm.removeFeedbackHandler('200:fooId');
+      fm.receiveFeedback(f, null);
+      expect(hFooId.callCount).to.be.eql(1);
+
+      fm.removeFeedbackHandler('fooId');
+      fm.receiveFeedback(f, null);
+      expect(h200.callCount).to.be.eql(1);
+
       expect(fm.handleFeedback.callCount).to.be.eql(0);
+
+      fm.removeFeedbackHandler('200');
+      fm.receiveFeedback(f, null);
+      expect(fm.handleFeedback.callCount).to.be.eql(1);
+
 
     });
 

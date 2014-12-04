@@ -39,10 +39,6 @@ define([
       this._handlers = {}; // TODO: expose api to register handlers
     },
 
-    activateCache: function() {
-      if (!this._cache)
-        this._cache = this._getNewCache();
-    },
 
     _getNewCache: function(options) {
       return new Cache(_.extend({
@@ -91,12 +87,17 @@ define([
         if (handler.execute && handler.execute(apiFeedback, entry)) {
           return;
         }
-        else if (handler.apply(this, apiFeedback, entry)) {
+        else if (handler.call(this, apiFeedback, entry)) {
           return;
         }
       }
 
       this.handleFeedback(apiFeedback, entry);
+    },
+
+    removeFeedbackHandler: function(name) {
+      if (name.toString() in this._handlers)
+        delete this._handlers[name.toString()];
     },
 
     addFeedbackHandler: function(code, func) {
@@ -108,7 +109,7 @@ define([
     },
 
     getFeedbackHandler: function(apiFeedback, entry) {
-      var keys = [entry.id + ':' + apiFeedback.code, entry.id, apiFeedback.code];
+      var keys = [apiFeedback.code + ':' + entry.id, entry.id, apiFeedback.code ? apiFeedback.code.toString() : Date.now()];
       for (var i=0; i<keys.length; i++) {
         if (keys[i] in this._handlers) {
           return this._handlers[keys[i]];
