@@ -50,8 +50,6 @@ define([
 
       expect(fm.receiveFeedback.callCount).to.be.eql(1);
 
-      minsub.publish(minsub.createRequest({'target': '/foo',
-        'query': minsub.createQuery({'q': 'foo:bar'})}))
     });
 
     it("has all methods necessary to manage its own state and receive FEEDBACK events", function() {
@@ -62,8 +60,10 @@ define([
 
       var f = new ApiFeedback({code: 200, msg: null});
       f.setSenderKey('fooId');
+      f.setApiRequest(minsub.publish(minsub.createRequest({'target': '/foo',
+        'query': minsub.createQuery({'q': 'foo:bar'})})));
 
-      var doNothing = function(x) {return true;}
+      var doNothing = function(x) {return true;};
       var h200 = sinon.spy(doNothing);
       var h200FooId = sinon.spy(doNothing);
       var hFooId = sinon.spy(doNothing);
@@ -76,6 +76,11 @@ define([
       expect(ck).to.be.eql('fooId');
       expect(fm._retrieveCacheEntry(ck)).to.be.null;
 
+      // should work with sender key
+      f.setSenderKey(null);
+      expect(fm._getCacheKey(f, 'bar')).to.be.eql('bar');
+      // without key and sender key, use request url
+      expect(fm._getCacheKey(f)).to.be.eql('bar');
 
       fm.receiveFeedback(f, null);
       expect(h200FooId.callCount).to.be.eql(1);
@@ -94,7 +99,6 @@ define([
       fm.removeFeedbackHandler('200');
       fm.receiveFeedback(f, null);
       expect(fm.handleFeedback.callCount).to.be.eql(1);
-
 
     });
 
