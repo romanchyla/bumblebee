@@ -60,8 +60,8 @@ define([
 
       var f = new ApiFeedback({code: 200, msg: null});
       f.setSenderKey('fooId');
-      f.setApiRequest(minsub.publish(minsub.createRequest({'target': '/foo',
-        'query': minsub.createQuery({'q': 'foo:bar'})})));
+      f.setApiRequest(minsub.createRequest({'target': '/foo',
+        'query': minsub.createQuery({'q': 'foo:bar'})}));
 
       var doNothing = function(x) {return true;};
       var h200 = sinon.spy(doNothing);
@@ -80,8 +80,10 @@ define([
       f.setSenderKey(null);
       expect(fm._getCacheKey(f, 'bar')).to.be.eql('bar');
       // without key and sender key, use request url
-      expect(fm._getCacheKey(f)).to.be.eql('bar');
+      expect(fm._getCacheKey(f)).to.be.eql('/foo?q=foo%3Abar');
 
+
+      f.setSenderKey('fooId');
       fm.receiveFeedback(f, null);
       expect(h200FooId.callCount).to.be.eql(1);
 
@@ -102,6 +104,34 @@ define([
 
     });
 
+    describe("Handling of FEEDBACK events", function() {
+
+      var application, feedbm;
+
+      beforeEach(function() {
+        feedbm = new FeedbackMediator();
+        feedbm.activate(minsub);
+        sinon.spy(feedbm, 'receiveFeedback');
+        sinon.spy(feedbm, 'handleFeedback');
+      });
+
+      afterEach(function() {
+        delete feedbm;
+      });
+
+      var create_feedback = function(code, msg) {
+        return new ApiFeedback({code: code, msg: msg});
+      };
+
+      it("handles FEEDBACK events", function() {
+
+        minsub.publish(create_feedback(ApiFeedback.CODES.SERVER_ERROR));
+
+        // the widget is put into the error state
+        expect(widget1.getState()).to.be.eql('error');
+
+      });
+    });
   });
 
 });
