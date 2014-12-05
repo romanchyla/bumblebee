@@ -30,8 +30,8 @@ require.config({
           DynamicConfig: 'discovery.vars',
           QueryMediator: 'js/components/query_mediator',
           HistoryManager: 'js/components/history_manager',
-
-          MasterPageManager: 'js/page_managers/master'
+          MasterPageManager: 'js/page_managers/master',
+          FeedbackMediator: 'js/wraps/discovery_mediator'
         },
         modules: {
           FacetFactory: 'js/widgets/facet/factory'

@@ -17,7 +17,8 @@ define([
     'js/components/api_response',
     'js/components/api_query_updater',
     'js/components/api_feedback',
-    'js/components/json_response'],
+    'js/components/pubsub_key'
+  ],
   function(
     _,
     $,
@@ -28,7 +29,8 @@ define([
     ApiResponse,
     ApiQueryUpdater,
     ApiFeedback,
-    JsonResponse) {
+    PubSubKey
+    ) {
 
 
   var ErrorMediator = GenericModule.extend({
@@ -124,15 +126,25 @@ define([
 
     /**
      * Creates a unique, cleaned key from the request and the apiQuery
-     * @param apiRequest
+     * @param apiFeedback
+     *    instance of {ApiFeedback}
+     * @param senderKey
+     *    string or instance of {PubSubKey}
      */
     _getCacheKey: function(apiFeedback, senderKey) {
       if (!apiFeedback)
         throw new Error('ApiFeedback cannot be empty');
       if (apiFeedback.getSenderKey())
         return apiFeedback.getSenderKey();
-      if (senderKey)
-        return senderKey;
+      if (senderKey) {
+        if (senderKey instanceof PubSubKey) {
+          return senderKey.getId();
+        }
+        else if (_.isString(senderKey)) {
+          return senderKey;
+        }
+      }
+
       var req = apiFeedback.getApiRequest();
       if (req) {
         return req.url();

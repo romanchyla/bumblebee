@@ -25,7 +25,11 @@ define([
       TOO_MANY_FAILURES: 580,
       ALL_FINE: 200,
       KEEP_WAITING: 190,
-      TESTING: 0
+      TESTING: 0,
+
+
+      // Internal events
+      MAKE_SPACE: -1
     };
 
     var _codes = {};
