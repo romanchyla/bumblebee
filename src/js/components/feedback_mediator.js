@@ -39,6 +39,7 @@ define([
       this._cache = this._getNewCache(options.cache);
       this.debug = options.debug || false;
       this._handlers = {}; // TODO: expose api to register handlers
+      this.app = null; // reference to the main application
     },
 
 
@@ -55,12 +56,15 @@ define([
      * @param beehive - the full access instance; we excpect PubSub to be
      *    present
      */
-    activate: function(beehive) {
+    activate: function(beehive, app) {
       this.setBeeHive(beehive);
       var pubsub = beehive.Services.get('PubSub');
       this.pubSubKey = pubsub.getPubSubKey();
 
       pubsub.subscribe(this.pubSubKey, pubsub.FEEDBACK, _.bind(this.receiveFeedback, this));
+
+      this.app = app;
+      this.pubsub = pubsub;
     },
 
 

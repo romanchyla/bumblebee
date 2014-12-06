@@ -104,7 +104,7 @@ define([
 
     });
 
-    describe("Handling of FEEDBACK events", function() {
+    describe.skip("Handling of FEEDBACK events", function() {
 
       var application, feedbm;
 

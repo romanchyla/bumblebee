@@ -16,10 +16,23 @@ define([
     var searchStarted = function() {};
 
     var makeSpace = function() {
-      var $btn = $('button.btn-expand.right-expand');
-      if ($btn.hasClass('pull-right')) {
-        $btn.click();
+
+      if (this.app) {
+        var mpm = this.app.getObject('MasterPageManager');
+        if (mpm) {
+          var child = mpm.getCurrentActiveChild();
+          if (child.view && child.view.showCols) {
+            child.view.showCols({left: true, right: false});
+            // open the view again
+            this.pubsub.once(this.pubsub.NAVIGATE + ' ' + this.pubsub.START_SEARCH, function() {child.view.showCols({right:true})});
+          }
+        }
       }
+
+      //var $btn = $('button.btn-expand.right-expand');
+      //if ($btn.hasClass('pull-right')) {
+      //  $btn.click();
+      //}
     };
 
 

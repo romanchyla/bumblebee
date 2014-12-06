@@ -156,7 +156,7 @@ define([
     },
 
     getCurrentActiveChild: function() {
-      return this.collection.get(this.currentChild);
+      return this.collection.get(this.currentChild).get('object'); // brittle?
     },
 
     hideAll: function() {
