@@ -33,9 +33,7 @@ define(['underscore',
 
     initialize: function(options) {
 
-      if (options.cache) {
-        this._cache = this._getNewCache(options.cache);
-      }
+      this._cache = this._getNewCache(options.cache);
       this.debug = options.debug || false;
       this.queryUpdater = new ApiQueryUpdater('QueryMediator');
       this.failedRequestsCache = this._getNewCache();
@@ -45,11 +43,6 @@ define(['underscore',
       this.shortDelayInMs = options.shortDelayInMs || 10;
       this.longDelayInMs = options.longDelayInMs || 50;
       this.monitoringDelayInMs = options.monitoringDelayInMs || 200;
-    },
-
-    activateCache: function() {
-      if (!this._cache)
-        this._cache = this._getNewCache();
     },
 
     _getNewCache: function(options) {
@@ -79,7 +72,9 @@ define(['underscore',
 
     getQTree: function(apiQuery, senderKey) {
       var apiRequest = new ApiRequest({'query': apiQuery, 'target': 'qtree'});
-      var api = this.getBeeHive().Services.get('Api');
+      var api = this.getBeeHive().getService('Api');
+      if (!api) return;
+
       api.request(apiRequest, {
         done: this.onApiResponse,
         fail: this.onApiRequestFailure,
@@ -98,10 +93,8 @@ define(['underscore',
         console.warn('[QM] : received empty query (huh?!)');
         return;
       }
-      var ps = this.getBeeHive().Services.get('PubSub');
+      var ps = this.getBeeHive().getService('PubSub');
 
-      if (this._cache)
-        this._cache.invalidateAll();
 
       if (this.__searchCycle.running && this.__searchCycle.waiting && _.keys(this.__searchCycle.waiting)) {
         console.error('The previous search cycle did not finish, and there already comes the next!');
@@ -146,26 +139,25 @@ define(['underscore',
       var api = beehive.getService('Api');
       var ps = beehive.getService('PubSub');
 
-      // first, grab the query/request which started the cycle
-      if (cycle.waiting[cycle.initiator]) {
+      if (!(ps && api)) return; // application is gone
+
+
+      if (beehive.hasObject('RuntimeConfig')) { // pick a request that will be executed first
+        var runtime = beehive.getObject('RuntimeConfig');
+        if (runtime.pskToExecuteFirst && cycle.waiting[runtime.pskToExecuteFirst]) {
+          data = cycle.waiting[runtime.pskToExecuteFirst];
+          delete cycle.waiting[runtime.pskToExecuteFirst];
+        }
+      }
+      if (!data && cycle.waiting[cycle.initiator]) { // grab the query/request which started the cycle
         data = cycle.waiting[cycle.initiator];
         delete cycle.waiting[cycle.initiator];
       }
-      else { // pick a request that will be executed first
-        if (beehive.hasObject('RuntimeConfig')) {
-          var runtime = beehive.getObject('RuntimeConfig');
-          if (runtime.pskToExecuteFirst && cycle.waiting[runtime.pskToExecuteFirst]) {
-            data = cycle.waiting[runtime.pskToExecuteFirst];
-            delete cycle.waiting[runtime.pskToExecuteFirst];
-          }
-        }
-
-        if (!data) {
-          console.warn('RuntimeConfig does not tell us which request to execute first (grabbing random one).');
-          var kx;
-          data = cycle.waiting[(kx=_.keys(cycle.waiting)[0])];
-          delete cycle.waiting[kx]
-        }
+      if (!data) {
+        console.warn('RuntimeConfig does not tell us which request to execute first (grabbing random one).');
+        var kx;
+        data = cycle.waiting[(kx=_.keys(cycle.waiting)[0])];
+        delete cycle.waiting[kx]
       }
 
       // execute the first search (if it succeeds, fire the rest)
@@ -174,6 +166,7 @@ define(['underscore',
 
       this._executeRequest(data.request, data.key)
         .done(function(data, textStatus, jqXHR) {
+          console.log('succeeeded 1')
           ps.publish(self.pubSubKey, ps.FEEDBACK, new ApiFeedback({code: ApiFeedback.CODES.SEARCH_CYCLE_STARTED}));
 
           // after we are done with the first query, start executing other queries
@@ -181,61 +174,22 @@ define(['underscore',
             data = cycle.waiting[k];
             delete cycle.waiting[k];
             cycle.inprogress[k] = data;
-            self.executeRequest.call(self, data.request, data.key);
+            console.log('adding', data.request.url())
+            self._executeRequest.call(self, data.request, data.key);
           });
         })
         .fail(function(jqXHR, textStatus, errorThrown) {
+          console.log('failed 2')
           self.__searchCycle.error = true;
           ps.publish(self.pubSubKey, ps.FEEDBACK, new ApiFeedback({code: ApiFeedback.CODES.SEARCH_CYCLE_FAILED_TO_START,
             request: this.request}));
         });
-      /*
-      api.request(data.request, {
-        done: function(data, textStatus, jqXHR) {
-
-          ps.publish(self.pubSubKey, ps.FEEDBACK, new ApiFeedback({code: ApiFeedback.CODES.SEARCH_CYCLE_STARTED}));
-
-          self.onApiResponse.call(
-            {request: this.request, key: this.key, requestKey: this.requestKey, qm: this.qm},
-            data, textStatus, jqXHR);
-
-
-          // after we are done with the first query, start executing other queries
-          setTimeout(function() {
-            _.each(_.keys(cycle.waiting), function (k) {
-              data = cycle.waiting[k];
-              delete cycle.waiting[k];
-              cycle.inprogress[k] = data;
-              self.executeRequest.call(self, data.request, data.key);
-            });
-          }, self.longDelayInMs);
-        },
-        fail: function(jqXHR, textStatus, errorThrown) {
-          ps.publish(self.pubSubKey, ps.FEEDBACK, new ApiFeedback({code: ApiFeedback.CODES.SEARCH_CYCLE_FAILED_TO_START,
-          request: this.request}));
-
-          // try to recover
-          if (self.onApiRequestFailure.call(
-            {request:this.request, key: this.key, requestKey:this.requestKey, qm: this.qm},
-            jqXHR, textStatus, errorThrown)) {
-
-
-            if (!self.__searchCycle.error) {
-              setTimeout(function() {
-                self.startExecutingQueries(true);
-              }, self.longDelayInMs);
-            }
-          }
-          self.__searchCycle.error = true;
-        },
-        context: {request:data.request, key: data.key, requestKey:requestKey, qm: this }
-      });
-      */
     },
 
     monitorExecution: function() {
       var self = this;
       var ps = this.getBeeHive().getService('PubSub');
+      if (!ps) return; // application is gone
 
       this.__searchCycle.monitor += 1;
 
@@ -308,6 +262,7 @@ define(['underscore',
         if (resp && resp.promise) { // we have already created ajax request
 
           resp.done(function() {
+            console.log('succeeeded')
             self._cache.put(requestKey, arguments);
             self.onApiResponse.apply(
               {request:apiRequest, key: senderKey, requestKey:requestKey, qm: self }, arguments);
@@ -333,10 +288,12 @@ define(['underscore',
 
           var promise = api.request(apiRequest, {
             done: function() {
+              console.log('succeeeded 0', arguments)
               self._cache.put(requestKey, arguments);
               self.onApiResponse.apply(this, arguments);
             },
             fail: function() {
+              console.log('failed 0', arguments)
               self._cache.invalidate(requestKey);
               self.onApiRequestFailure.apply(this, arguments);
             },

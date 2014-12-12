@@ -76,6 +76,7 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
       _.extend(this, _.pick(options, ['strict', 'handleErrors', 'errWarningCount']));
       this.pubSubKey = PubSubKey.newInstance({creator: {}}); // this.getPubSubKey(); // the key the pubsub uses for itself
       this._issuedKeys[this.pubSubKey.getId()] = this.pubSubKey.getCreator();
+      this.running = true;
     },
 
 
@@ -87,6 +88,7 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
     start: function() {
       this.publish(this.pubSubKey, this.OPENING_GATES);
       this.publish(this.pubSubKey, this.OPEN_FOR_BUSINESS);
+      this.running = true;
     },
 
     /*
@@ -97,6 +99,7 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
       this.publish(this.pubSubKey, this.CLOSING_GATES);
       this.off();
       this.publish(this.pubSubKey, this.CLOSED_FOR_BUSINESS);
+      this.running = false;
       this._issuedKeys = {};
     },
 
@@ -116,6 +119,9 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
      *
      */
     subscribe: function(key, name, callback) {
+      if (!this.isRunning()) {
+        throw new Error('PubSub has been closed, ignoring futher requests');
+      }
       this._checkKey(key, name, callback);
       if (_.isUndefined(name)) {
         throw new Error("You tried to subscribe to undefined event. Error between chair and keyboard?");
@@ -208,6 +214,12 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
      * are callbacks that can handle the event
      */
     publish: function() {
+
+      if (!this.isRunning()) {
+        console.error('PubSub has been closed, ignoring futher requests');
+        return;
+      }
+
       this._checkKey(arguments[0]);
       var args = Array.prototype.slice.call(arguments, 1);
       
@@ -324,6 +336,10 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
       if (nerr % this.errWarningCount == 0) {
         this.publish(this.pubSubKey, this.BIG_FIRE, nerr, e, event, args);
       }
+    },
+
+    isRunning: function() {
+      return this.running;
     }
 
   });

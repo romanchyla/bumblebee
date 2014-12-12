@@ -36,6 +36,7 @@ define(['underscore', 'jquery', 'js/components/generic_module', 'js/components/a
 
   Api.prototype.request = function(request, options) {
 
+    console.log('serving', request.url())
     if (!(request instanceof ApiRequest)) {
       throw Error("Api.request accepts only instances of ApiRequest");
     }
