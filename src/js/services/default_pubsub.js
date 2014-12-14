@@ -77,6 +77,7 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
       this.pubSubKey = PubSubKey.newInstance({creator: {}}); // this.getPubSubKey(); // the key the pubsub uses for itself
       this._issuedKeys[this.pubSubKey.getId()] = this.pubSubKey.getCreator();
       this.running = true;
+      this.debug = false;
     },
 
 
@@ -329,8 +330,14 @@ define(['backbone', 'underscore', 'js/components/generic_module', 'js/components
     // the default implementation just counts the number of errors per module (key) and
     // triggers pubsub.many_errors
     handleCallbackError: function(e, event, args) {
-      console.warn(e.stack);
       console.warn('[PubSub] Error: ', event, args);
+      if (this.debug) {
+        throw e;
+      }
+      else {
+        console.warn(e.stack);
+      }
+
       var kid = event.ctx.getId();
       var nerr = (this._errors[kid] = (this._errors[kid] || 0) + 1);
       if (nerr % this.errWarningCount == 0) {
