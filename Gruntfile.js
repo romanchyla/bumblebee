@@ -72,16 +72,20 @@ module.exports = function(grunt) {
       options: {
         //baseUrl: 'src/js',
         //mainConfigFile: 'src/js/config.js',
-        dir: 'dist/js',
+        //dir: 'dist/js',
         baseUrl: 'src/js'
         //appDir:'src/js'
       },
 
       release: {
         options: {
-          generateSourceMaps: true,
+          //mainConfigFile : "src/discovery.config.js",
+          appDir: './',
+          generateSourceMaps: false,
+          removeCombined: true,
 
           optimize: 'uglify2',
+          optimizeCss: 'standard',
 
           // Since we bootstrap with nested `require` calls this option allows
           // R.js to find them.
@@ -95,11 +99,55 @@ module.exports = function(grunt) {
 
           // Do not preserve any license comments when working with source
           // maps.  These options are incompatible.
-          preserveLicenseComments: false
+          preserveLicenseComments: false,
+
+          dir: 'dist/js',
+          //out: "dist/foo.js",
         }
       }
     },
 
+    'hash_require': {
+      'require_js': {
+        configPath: 'build.js',
+        dest: 'dist'
+      },
+      json: {
+        options: {
+          mapping: 'hashed/assets.json'
+        },
+        src: 'src/js/*.js',
+        dest: 'hashed/json/'
+      },
+      single: {
+        options: {
+          mapping: 'hashed/single.json'
+        },
+        src: 'src/js/apps/discovery/main.js',
+        dest: 'hashed/dist/single/'
+      },
+      /* find js/css files, and add hash (md5 checksum) to them
+       */
+      js: {
+        options: {
+          mapping: 'dist/jsmap.json',
+          destBasePath: 'dist/',
+          srcBasePath: 'dist/',
+          flatten:false
+        },
+        src: ['dist/js/**/*.js', 'dist/*.js']
+      },
+      css: {
+        options: {
+          mapping: 'dist/cssmap.json',
+          destBasePath: 'dist/',
+          srcBasePath: 'dist/',
+          flatten:false
+        },
+        src: ['dist/styles/css/styles.css']
+      }
+
+    },
 
     // Minfiy the distribution CSS. This is of limited value to us, for two
     // reasons: 1) css imports are not working 2) the task doesn't seem to
@@ -278,7 +326,7 @@ module.exports = function(grunt) {
     },
 
     // copy files from src into the distribution folder (but remove
-    // src top level)
+    // 'src' top level)
     copy: {
       release: {
         files: [{
@@ -294,6 +342,16 @@ module.exports = function(grunt) {
       discovery_vars: {
           src: 'src/discovery.vars.js.default',
           dest: 'src/discovery.vars.js'
+      },
+      foo: {
+        files: [{
+          src: ['./src/js/components/**/*.js'],
+          dest: 'dist/',
+          expand: true,
+          rename: function(dest, src) {
+            return dest + src.replace('/src/', '/');
+          }
+        }]
       }
     },
 
@@ -461,6 +519,7 @@ module.exports = function(grunt) {
   grunt.loadNpmTasks('grunt-concurrent');
   grunt.loadNpmTasks('grunt-mocha');
   grunt.loadNpmTasks("grunt-blanket-mocha");
+  grunt.loadNpmTasks('grunt-hash-required');
 
   // Create an aliased test task.
   grunt.registerTask('setup', 'Sets up the development environment',
@@ -502,5 +561,6 @@ module.exports = function(grunt) {
 
   grunt.registerTask('bower-setup', ['clean:bower', 'bower', 'exec:convert_dsjslib', 'exec:move_jqueryuicss']);
   grunt.registerTask('coverage', ['env:dev', 'express:dev', 'blanket_mocha:full']);
+
 
 };
