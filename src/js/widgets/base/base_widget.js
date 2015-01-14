@@ -79,7 +79,7 @@ define([
         Marionette.bindEntityEvents(this, this.view, Marionette.getOption(this, "viewEvents"));
       if (this.model)
         Marionette.bindEntityEvents(this, this.model, Marionette.getOption(this, "modelEvents"));
-
+      this.wid = _.uniqueId('widget');
     },
 
     /**

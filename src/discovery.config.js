@@ -135,6 +135,7 @@ require.config({
     // for development use
     //'google-analytics': "//www.google-analytics.com/analytics_debug",
     'google-analytics': "//www.google-analytics.com/analytics",
+    'persist-js': 'libs/persist-js/src/persist',
 
     // only for diagnostics/debugging/testing - wont get loaded otherwise
     'sprintf': 'libs/sprintf/sprintf',

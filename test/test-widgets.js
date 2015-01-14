@@ -14,12 +14,15 @@
  *
  */
 
-require(['js/components/application',
-  'jquery',
-  'underscore'],
-  function(Application,
-           $,
-           _) {
+require([
+    'js/components/application',
+    'jquery',
+    'underscore'],
+  function(
+    Application,
+    $,
+    _
+    ) {
 
   var d = window.location.search.substring(1);
 
@@ -30,6 +33,8 @@ require(['js/components/application',
   }
 
   var app = new Application();
+  window.bbb = app;
+
   var config = {
     core: {
       services: {
