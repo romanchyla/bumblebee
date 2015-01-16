@@ -11,8 +11,8 @@ define([], function() {
       '/widgets/base_container_view.spec.js',
       '/widgets/base_tree_view.spec.js',
       '/widgets/base_widget.spec.js',
-
       '/widgets/breadcrumb_widget.spec.js',
+      '/widgets/carousel_widget.spec.js',
       '/widgets/citation_graph_facet_widget.spec.js',
       '/widgets/dropdown_widget.spec.js',
       '/widgets/export_widget.spec.js',
