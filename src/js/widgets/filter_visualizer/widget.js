@@ -202,15 +202,18 @@ define([
             }
 
             // now we have to identify the remaining parts
-            var filteredKeys = _.filter(keys, function(x) {if (x.indexOf(k) > -1 && x !== k) return true;})
+            var filteredKeys = _.filter(keys, function(x) {if (x.indexOf(k) > -1 && x !== k) return true;});
 
             if (filteredKeys.length != 1) {
-              console.error('We cant identify the parts of:', k, 'found:', filteredKeys)
-              return; // the query is incomplete (or there are too many ambiguous partss), give up
+              console.warn('We cant identify auxiliary parts of:', k, 'found:', filteredKeys);
+              oneFilter.filter_key = null;
+              oneFilter.filter_value = ['OR', oneFilter.filter_query];
+            }
+            else {
+              oneFilter.filter_key = filteredKeys[0];
+              oneFilter.filter_value = data[filteredKeys[0]];
             }
 
-            oneFilter.filter_key = filteredKeys[0];
-            oneFilter.filter_value = data[filteredKeys[0]];
             filters.push(oneFilter);
           }
         }, this);
@@ -316,7 +319,7 @@ define([
           });
 
           // if there are too many elements, just show one value 'x custom values'
-          if (filter.filter_value.length-1 > this.maxNumberOfTokens || filter.filter_value.join(' ').length > this.maxQueryLen) {
+          if (filter.filter_value && (filter.filter_value.length-1 > this.maxNumberOfTokens || filter.filter_value.join(' ').length > this.maxQueryLen)) {
             oneFilter.push({
               type: 'operand',
               display: 'custom query',
@@ -424,8 +427,8 @@ define([
         }
 
         switch (c.part) {
-          case 'operand': // remove one item from the filter
-            if (q[this.currentFilters[c.name]['filter_key']].length > 2) { // if we remove one, there must be >=1 left
+          case 'operand': // remove one item condition from the filter
+            if (q[this.currentFilters[c.name]['filter_key']] && q[this.currentFilters[c.name]['filter_key']].length > 2) { // if we remove one, there must be >=1 left
               var aux = q[this.currentFilters[c.name]['filter_key']];
               if (_.indexOf(aux, c.value) == -1) {
                 console.error('Cannot find/remove the value: ' + c.value, aux);

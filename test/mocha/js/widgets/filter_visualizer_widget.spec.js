@@ -545,5 +545,67 @@ define([
         expect(widget.beautifyOperand('fq_grant', 'grant:foo')).to.eql('foo');
       });
 
+      it("can extract filters even if auxiliary informaiton is missing", function() {
+
+        var widget = new FilterVisualizerWidget({withoutOperators: true});
+
+        var q, filters, gui_data, mq;
+
+        q = minsub.createQuery({
+            "q":["star"],
+            "sort":["date desc"],
+            "fq_author":["(author_facet_hier:\"0/Wang, J\")"],
+            "fq":["{!type=aqp cache=false cost=150 v=$fq_author}"]}
+        );
+
+        filters = widget.extractFilters(q);
+        expect(filters[0]).to.eql({
+          category: 'Author',
+          filter_name: 'fq_author',
+          filter_query: "(author_facet_hier:\"0/Wang, J\")",
+          filter_key: null,
+          filter_value: ['OR', '(author_facet_hier:"0/Wang, J")']
+        });
+
+        var gui_data = widget.prepareGUIData([
+          {
+            category: 'Author',
+            filter_name: 'fq_author',
+            filter_query: "(author_facet_hier:\"0/Wang, J\")",
+            filter_key: null,
+            filter_value: ['OR', '(author_facet_hier:"0/Wang, J")']
+          }
+        ]);
+
+        expect(gui_data).to.eql([
+          {
+            "elements": [
+              {
+                "type": "category",
+                "display": "Author",
+                "value": "fq_author|category|Author"
+              },
+              {
+                "type": "operand",
+                "display": "Wang, J",
+                "value": "fq_author|operand|(author_facet_hier:\"0/Wang, J\")"
+              }
+            ]
+          }
+        ]);
+
+        widget._saveInfo(q, filters);
+        mq = widget.createModifiedQuery('fq_author|operand|(author_facet_hier:"0/Wang, J")');
+
+        expect(mq.toJSON()).to.eql({
+          "q": [
+            "star"
+          ],
+          "sort": [
+            "date desc"
+          ]
+        });
+      });
+
     });
   });
