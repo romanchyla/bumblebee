@@ -92,9 +92,12 @@ define([
             return;
           var subView = data.subView || "token";
           //set left hand nav panel correctly and tell the view what to show
-          app.getWidget("SettingsPage").setActive("UserSettings",  subView);
           app.getObject('MasterPageManager').show("SettingsPage",
             ['UserSettings', "UserNavbarWidget"]);
+          app.getWidget("SettingsPage")
+           .done(function(widget) {
+             widget.setActive("UserSettings",  subView);
+           });
 
           this.route = "#user/settings/"+subView;
           publishPageChange("settings-page");
@@ -106,9 +109,11 @@ define([
           if (redirectIfNotSignedIn())
             return;
           //set left hand nav panel correctly and tell the view what to show
-          app.getWidget("SettingsPage").setActive("UserPreferences");
           app.getObject('MasterPageManager').show("SettingsPage",
             ['UserPreferences', "UserNavbarWidget"]);
+          app.getWidget("SettingsPage").done(function(widget) {
+              widget.setActive("UserPreferences",  subView);
+            });
 
           this.route = "#user/settings/preferences";
           publishPageChange("settings-page");
@@ -119,9 +124,11 @@ define([
 
           var subView = subView || "libraries";
 
-          app.getWidget("AllLibrariesWidget").setSubView(subView);
           app.getObject('MasterPageManager').show("LibrariesPage",
             ["AllLibrariesWidget", "UserNavbarWidget"]);
+          app.getWidget("AllLibrariesWidget").done(function(widget) {
+            widget.setSubView(subView);
+          });
 
           this.route = "#user/libraries/";
           publishPageChange("libraries-page");
@@ -136,9 +143,11 @@ define([
             throw new Error("no valid subview provided to individual library widget");
           }
 
-          app.getWidget("IndividualLibraryWidget").setSubView(sub, id);
           app.getObject('MasterPageManager').show("LibrariesPage",
             ["IndividualLibraryWidget", "UserNavbarWidget"]);
+          app.getWidget("IndividualLibraryWidget").done(function(widget) {
+            widget.setSubView(sub, id);
+          });
 
           var lastSlash = (sub == "library") ? "" : "/admin";
 
@@ -151,10 +160,16 @@ define([
 
         //first, tell export widget what to show
         if (data.bibcodes && data.bibcodes.length) {
+          app.getWidget("ExportWidget").done(function(exportw) {
+            exportw.exportRecords(data.sub, data.bibcodes);
 
-          app.getWidget("ExportWidget").exportRecords(data.sub, data.bibcodes);
-          //then, set library tab to proper field
-          app.getWidget("IndividualLibraryWidget").setSubView("export");
+            //then, set library tab to proper field
+            app.getWidget("IndividualLibraryWidget").done(function(widget) {
+              widget.setSubView("export");
+            });
+
+          });
+
 
         }
         else if (data.id){
@@ -162,16 +177,16 @@ define([
           app.getObject("LibraryController").getLibraryRecords(data.id).done(function(bibcodes){
 
             bibcodes = bibcodes.documents;
-            app.getWidget("ExportWidget").exportRecords(data.sub, bibcodes);
-            //then, set library tab to proper field
-            app.getWidget("IndividualLibraryWidget").setSubView("export", data.id);
-
+            app.getWidget("ExportWidget", "IndividualLibraryWidget").done(function(w) {
+              w.ExportWidget.exportRecords(data.sub, bibcodes);
+              //then, set library tab to proper field
+              w.IndividualLibraryWidget.setSubView("export", data.id);
+            });
           });
 
         }
         else {
           throw new Error("neither an identifying id for library nor the bibcodes themselves were provided to export widget");
-          return
         }
 
         //then, show library page manager
@@ -188,18 +203,21 @@ define([
 
           //first, tell export widget what to show
           if (data.bibcodes && data.bibcodes.length) {
-
-            app.getWidget("Metrics").showMetricsForListOfBibcodes(data.bibcodes);
-            //then, set library tab to proper field
-            app.getWidget("IndividualLibraryWidget").setSubView("metrics");
+            app.getWidget('Metrics', 'IndividualLibraryWidget').done(function(w) {
+              w.Metrics.showMetricsForListOfBibcodes(data.bibcodes);
+              //then, set library tab to proper field
+              w.IndividualLibraryWidget.setSubView("metrics");
+            });
           }
           else if (data.id){
 
             app.getObject("LibraryController").getLibraryRecords(data.id).done(function(bibcodes){
               bibcodes = bibcodes.documents;
-              app.getWidget("Metrics").showMetricsForListOfBibcodes(bibcodes);
-              //then, set library tab to proper field
-              app.getWidget("IndividualLibraryWidget").setSubView("metrics", data.id);
+              app.getWidget('Metrics', 'IndividualLibraryWidget').done(function(w) {
+                w.Metrics.showMetricsForListOfBibcodes(bibcodes);
+                //then, set library tab to proper field
+                w.IndividualLibraryWidget.setSubView("metrics", data.id);
+              });
             });
 
           }
@@ -235,10 +253,12 @@ define([
             self.get('index-page').execute();
           }
           else {
-            app.getWidget("Authentication").setSubView(subView);
             this.route = "#user/account/" + subView;
             app.getObject('MasterPageManager').show("AuthenticationPage",
               ['Authentication']);
+            app.getWidget("Authentication").done(function(w) {
+              w.setSubView(subView);
+            });
           }
         });
 
@@ -255,48 +275,60 @@ define([
 
           var format = options.format || 'bibtex';
           var storage = app.getObject('AppStorage');
-          var widget = app.getWidget('ExportWidget');
-
-
-          //classic is a special case, it opens in a new tab
-          if (format == "classic"){
-            if (options.onlySelected && storage.hasSelectedPapers()) {
-              widget.openClassicExports({bibcodes: storage.getSelectedPapers()});
-            }
-            else {
-              widget.openClassicExports({currentQuery : storage.getCurrentQuery()});
-            }
-            return
-          }
-
-          //first, open central panel
-          publishFeedback({code: ApiFeedback.CODES.MAKE_SPACE});
-
-          // only selected records requested
-          if (options.onlySelected && storage.hasSelectedPapers()) {
-            widget.exportRecords(format, storage.getSelectedPapers());
-          }
-          //all records specifically requested
-          else if (options.onlySelected === false && storage.hasCurrentQuery()){
-            widget.exportQuery({format : format,  currentQuery: storage.getCurrentQuery(),  numFound : storage.get("numFound")});
-          }
-          // no request for selected or not selected, show selected
-          else if (options.onlySelected === undefined && storage.hasSelectedPapers()){
-            widget.exportRecords(format, storage.getSelectedPapers());
-          }
-          //no selected, show all papers
-          else if(storage.hasCurrentQuery()) {
-            widget.exportQuery({format : format,  currentQuery: storage.getCurrentQuery(),  numFound : storage.get("numFound")});
-          }
-          else {
-            var alerts = app.getController('AlertsController');
-            alerts.alert({msg: 'There are no records to export yet (please search or select some)'});
-            this.get('results-page')();
-            return;
-          }
 
           app.getObject('MasterPageManager').show('SearchPage',
             ['ExportWidget'].concat(searchPageAlwaysVisible.slice(1)));
+
+          app.getWidget('ExportWidget').done(function(widget) {
+
+
+            //classic is a special case, it opens in a new tab
+            if (format == "classic") {
+              if (options.onlySelected && storage.hasSelectedPapers()) {
+                widget.openClassicExports({bibcodes: storage.getSelectedPapers()});
+              }
+              else {
+                widget.openClassicExports({currentQuery: storage.getCurrentQuery()});
+              }
+              return
+            }
+
+            //first, open central panel
+            publishFeedback({code: ApiFeedback.CODES.MAKE_SPACE});
+
+            // only selected records requested
+            if (options.onlySelected && storage.hasSelectedPapers()) {
+              widget.exportRecords(format, storage.getSelectedPapers());
+            }
+            //all records specifically requested
+            else if (options.onlySelected === false && storage.hasCurrentQuery()) {
+              widget.exportQuery({
+                format: format,
+                currentQuery: storage.getCurrentQuery(),
+                numFound: storage.get("numFound")
+              });
+            }
+            // no request for selected or not selected, show selected
+            else if (options.onlySelected === undefined && storage.hasSelectedPapers()) {
+              widget.exportRecords(format, storage.getSelectedPapers());
+            }
+            //no selected, show all papers
+            else if (storage.hasCurrentQuery()) {
+              widget.exportQuery({
+                format: format,
+                currentQuery: storage.getCurrentQuery(),
+                numFound: storage.get("numFound")
+              });
+            }
+            else {
+              var alerts = app.getController('AlertsController');
+              alerts.alert({msg: 'There are no records to export yet (please search or select some)'});
+              this.get('results-page')();
+              return;
+            }
+
+          });
+
         });
 
         this.set('export-query', function() {
@@ -385,10 +417,11 @@ define([
 
           this.route = '#user/orcid';
 
-          var orcidWidget = app.getWidget('OrcidBigWidget');
-          if (orcidWidget) {
-            app.getObject('MasterPageManager').show('SearchPage',
-              ['OrcidBigWidget', 'SearchWidget']);
+          if (app.hasWidget('OrcidBigWidget')) {
+            app.getWidget('OrcidBigWidget').done(function (orcidWidget) {
+              app.getObject('MasterPageManager').show('SearchPage',
+                ['OrcidBigWidget', 'SearchWidget']);
+            });
           }
           else {
             self.pubsub.publish(self.pubSubKey, self.pubsub.NAVIGATE, 'index-page');
@@ -420,72 +453,58 @@ define([
         this.set('show-metrics', function() {
           publishFeedback({code: ApiFeedback.CODES.MAKE_SPACE});
 
-          app.getWidget("Metrics").showMetricsForCurrentQuery();
           app.getObject('MasterPageManager').show('SearchPage',
             ['Metrics'].concat(searchPageAlwaysVisible.slice(1)));
+          app.getWidget("Metrics").done(function(w) {
+            w.showMetricsForCurrentQuery();
+          });
+
         });
         this.set("visualization-closed", this.get("results-page"));
 
 
-        this.set('ShowAbstract', function(id, data){
-          app.getWidget("DetailsPage").setActive("ShowAbstract");
+        var showDetail = function(pages, toActivate) {
           app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowAbstract'].concat(detailsPageAlwaysVisible));
+            pages);
+          app.getWidget("DetailsPage").done(function(w) {
+            w.setActive(toActivate);
+          });
+        };
+
+        this.set('ShowAbstract', function(id, data){
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
         this.set('ShowCitations', function(id, data) {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowCitations");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowCitations'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
         this.set('ShowReferences', function(id, data ) {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowReferences");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowReferences'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
         this.set('ShowCoreads', function(id, data) {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowCoreads");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowCoreads'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
         this.set('ShowTableOfContents', function(id, data) {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowTableOfContents");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowTableOfContents'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
         this.set('ShowSimilar', function(id, data) {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowSimilar");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowSimilar'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
           this.route = data.href;
         });
-        this.set('ShowPaperMetrics', function() {
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowPaperMetrics");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowPaperMetrics'].concat(detailsPageAlwaysVisible));
+        this.set('ShowPaperMetrics', function(id) {
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
         });
         this.set("ShowPaperExport", function(funcName, data){
           var format = data.subView;
-          //set left hand nav panel correctly
-          app.getWidget("DetailsPage").setActive("ShowPaperExport", format);
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowPaperExport'].concat(detailsPageAlwaysVisible));
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
 //          this.route = data.href;
         });
-        this.set('ShowGraphics', function() {
-          app.getWidget("DetailsPage").setActive("ShowGraphics");
-          app.getObject('MasterPageManager').show('DetailsPage',
-            ['ShowGraphics'].concat(detailsPageAlwaysVisible));
+        this.set('ShowGraphics', function(id) {
+          showDetail([id].concat(detailsPageAlwaysVisible), id);
         });
       }
 
