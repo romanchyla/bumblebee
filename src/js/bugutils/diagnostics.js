@@ -221,7 +221,7 @@ define([
           url: url + '/solr/collection1/select?q=' + q + '&fl=id&wt=json&indent=true',
           context: {field: fname, finalResult:finalResult, cycleR: cycleR},
           timeout: 300000 // 5mins
-        })
+          })
           .done(function(data) {
             this.finalResult.fields[this.field] = {numFound: data.response.numFound};
             var c = 0;
@@ -233,6 +233,20 @@ define([
               }
             }
             console.log(url + ' Got response for: ' + this.field + ' numFound: ' + data.response.numFound + ' requests to go: ' + c + ' ' + (togo.length < 5 ? togo.join(', ') : ''));
+            if (c == 0)
+              result.resolve(this.finalResult);
+          })
+          .fail(function() {
+            this.finalResult.fields[this.field] = {numFound: -1};
+            var c = 0;
+            var togo = [];
+            for (var x in this.cycleR) {
+              if (this.cycleR[x].state() == 'pending') { //resolved and rejected count as done
+                c += 1;
+                togo.push(x);
+              }
+            }
+            console.log(url + ' Failed for: ' + this.field + ' numFound: -1 requests to go: ' + c + ' ' + (togo.length < 5 ? togo.join(', ') : ''));
             if (c == 0)
               result.resolve(this.finalResult);
           });
