@@ -44,9 +44,5 @@
     "sinon": "http://sinonjs.org/releases/sinon-1.9.0.js",
     "sprintf": "~1.0.2",
     "squire": "~0.2.0"
-  },
-  "resolutions": {
-    "d3": "~3.4.6",
-    "react": "^15.1.0"
   }
 }
