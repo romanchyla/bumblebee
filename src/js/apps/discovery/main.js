@@ -26,7 +26,7 @@ define(['config', 'module'], function (config, module) {
     DiscoveryBootstrap,
     ApiAccess,
     analytics) {
-    var updateProgress = (typeof window.__setAppLoadingProgress === 'function')
+    var updateProgress = (typeof window.__setAppLoadingProgress === 'function' && !window.__PRERENDERED)
       ? window.__setAppLoadingProgress : function () {};
 
     var timeStart = Date.now();
@@ -131,7 +131,7 @@ define(['config', 'module'], function (config, module) {
 
         // app is loaded, send timing event
 
-        if (__PAGE_LOAD_TIMESTAMP) {
+        if (window.__PAGE_LOAD_TIMESTAMP) {
           var time = new Date() - __PAGE_LOAD_TIMESTAMP;
           analytics('send', {
             hitType: 'timing',
